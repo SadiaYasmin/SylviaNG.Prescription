@@ -1,0 +1,81 @@
+{
+  "realm": "prescriptionms",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "Admin", "description": "Hospital administrator" },
+      { "name": "Doctor", "description": "Doctor" },
+      { "name": "Staff", "description": "Front-desk / assistant staff" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "prescriptionms-backend",
+      "name": "PrescriptionMS Backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-only-secret-change-me",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "prescriptionms-backend",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin.dev",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin.dev@prescriptionms.local",
+      "firstName": "Admin",
+      "lastName": "Dev",
+      "credentials": [
+        { "type": "password", "value": "DevPassword123!", "temporary": false }
+      ],
+      "realmRoles": ["Admin"]
+    },
+    {
+      "username": "doctor.dev",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "doctor.dev@prescriptionms.local",
+      "firstName": "Doctor",
+      "lastName": "Dev",
+      "credentials": [
+        { "type": "password", "value": "DevPassword123!", "temporary": false }
+      ],
+      "realmRoles": ["Doctor"]
+    },
+    {
+      "username": "staff.dev",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "staff.dev@prescriptionms.local",
+      "firstName": "Staff",
+      "lastName": "Dev",
+      "credentials": [
+        { "type": "password", "value": "DevPassword123!", "temporary": false }
+      ],
+      "realmRoles": ["Staff"]
+    }
+  ]
+}

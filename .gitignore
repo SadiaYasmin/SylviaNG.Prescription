@@ -53,6 +53,10 @@ docker-compose.override.yml
 docker/*.tar
 docker/*.img
 
+# Local environment variables
+.env
+!.env.example
+
 # Kubernetes (Optional overrides/configs)
 k8s/*.local.yaml
 k8s/secret.*
