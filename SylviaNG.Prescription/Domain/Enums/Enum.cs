@@ -1,31 +1,8 @@
 namespace SylviaNG.Prescription.Domain.Enums;
 
-public enum JobStatusEnum
+public enum UserRoleEnum
 {
-    Draft,
-    Open,
-    OnHold,
-    Closed,
-    Archived
-}
-
-public enum EmploymentTypeEnum
-{
-    FullTime,
-    PartTime,
-    Contract,
-    Internship
-}
-
-public enum ApplicationStatusEnum
-{
-    Applied,
-    Screening,
-    Shortlisted,
-    InterviewScheduled,
-    Interviewed,
-    Offered,
-    Hired,
-    Rejected,
-    Withdrawn
+    Admin,
+    Doctor,
+    Staff
 }

@@ -15,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddGrpcServices(builder.Configuration);
+builder.Services.AddKeycloakClients(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -91,6 +92,12 @@ builder.Services.AddControllers(options =>
 
 
 var app = builder.Build();
+
+await using (var seedScope = app.Services.CreateAsyncScope())
+{
+    var adminSeeder = seedScope.ServiceProvider.GetRequiredService<SylviaNG.Prescription.Application.Services.AdminAccountSeeder>();
+    await adminSeeder.SeedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

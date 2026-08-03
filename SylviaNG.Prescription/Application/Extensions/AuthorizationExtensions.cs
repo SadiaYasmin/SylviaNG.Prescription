@@ -8,7 +8,10 @@ namespace SylviaNG.Prescription.Application.Extensions
         {
             services.AddAuthorization(options =>
             {
-                // Add prescription-specific authorization policies here
+                options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("DoctorOnly", policy => policy.RequireRole("Doctor"));
+                options.AddPolicy("StaffOnly", policy => policy.RequireRole("Staff"));
+                options.AddPolicy("DoctorOrStaff", policy => policy.RequireRole("Doctor", "Staff"));
             });
 
             return services;

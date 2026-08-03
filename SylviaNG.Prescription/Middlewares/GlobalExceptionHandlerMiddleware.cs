@@ -25,6 +25,16 @@ namespace SylviaNG.Prescription.Middlewares
                 _logger.LogWarning(ex, "Resource not found.");
                 await HandleExceptionAsync(context, StatusCodes.Status404NotFound, ex.Message);
             }
+            catch (DuplicateException ex)
+            {
+                _logger.LogWarning(ex, "Duplicate resource.");
+                await HandleExceptionAsync(context, StatusCodes.Status409Conflict, ex.Message);
+            }
+            catch (InvalidCredentialsException ex)
+            {
+                _logger.LogWarning(ex, "Login attempt failed: invalid credentials.");
+                await HandleExceptionAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
+            }
             catch (FluentValidation.ValidationException ex)
             {
                 _logger.LogWarning(ex, "Validation failed.");

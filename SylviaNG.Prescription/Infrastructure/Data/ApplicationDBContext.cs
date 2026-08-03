@@ -54,10 +54,7 @@ namespace SylviaNG.Prescription.Infrastructure.Data
 
         #region Tables
 
-        public DbSet<JobPosting> JobPostings { get; set; }
-        public DbSet<JobApplication> JobApplications { get; set; }
-        public DbSet<Interview> Interviews { get; set; }
-        public DbSet<Employee> Employees { get; set; }
+        public DbSet<User> Users { get; set; }
 
         #endregion
 

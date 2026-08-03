@@ -21,7 +21,7 @@
       "secret": "dev-only-secret-change-me",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
+      "serviceAccountsEnabled": true,
       "implicitFlowEnabled": false,
       "redirectUris": ["*"],
       "webOrigins": ["*"],
@@ -36,46 +36,32 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "realm-role-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "http://schemas\\.microsoft\\.com/ws/2008/06/identity/claims/role",
+            "jsonType.label": "String",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
         }
       ]
     }
   ],
   "users": [
     {
-      "username": "admin.dev",
+      "username": "service-account-prescriptionms-backend",
       "enabled": true,
-      "emailVerified": true,
-      "email": "admin.dev@prescriptionms.local",
-      "firstName": "Admin",
-      "lastName": "Dev",
-      "credentials": [
-        { "type": "password", "value": "DevPassword123!", "temporary": false }
-      ],
-      "realmRoles": ["Admin"]
-    },
-    {
-      "username": "doctor.dev",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "doctor.dev@prescriptionms.local",
-      "firstName": "Doctor",
-      "lastName": "Dev",
-      "credentials": [
-        { "type": "password", "value": "DevPassword123!", "temporary": false }
-      ],
-      "realmRoles": ["Doctor"]
-    },
-    {
-      "username": "staff.dev",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "staff.dev@prescriptionms.local",
-      "firstName": "Staff",
-      "lastName": "Dev",
-      "credentials": [
-        { "type": "password", "value": "DevPassword123!", "temporary": false }
-      ],
-      "realmRoles": ["Staff"]
+      "serviceAccountClientId": "prescriptionms-backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-realm"]
+      }
     }
   ]
 }

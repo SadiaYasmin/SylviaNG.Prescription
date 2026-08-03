@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
 using SylviaNG.Prescription.Infrastructure.Data;
 using SylviaNG.Prescription.Infrastructure.Interceptors;
-using SylviaNG.Prescription.Infrastructure.Kafka;
 using SylviaNG.Prescription.Infrastructure.Repositories;
 using SylviaNG.Prescription.SharedKernel.Generic;
 using SylviaNG.Prescription.SharedKernel.Utils;
@@ -68,15 +67,10 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
 
             // Register your repositories here
             // Adding DI of repositories
-            services.AddScoped<IJobPostingRepository, JobPostingRepository>();
-            services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-            // Kafka
-            services.Configure<KafkaSettings>(configuration.GetSection("Kafka"));
-            services.AddHostedService<EmployeeEventConsumer>();
 
             return services;
         }

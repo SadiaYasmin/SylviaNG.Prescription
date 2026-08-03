@@ -28,8 +28,8 @@ namespace SylviaNG.Prescription.Application.Extensions
             #region Services -> Business Classes
             // Add prescription-specific services here
 
-            services.AddScoped<IJobPostingService, JobPostingService>();
-            services.AddScoped<IJobApplicationService, JobApplicationService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<AdminAccountSeeder>();
 
             // Provide access to HttpContext for request metadata enrichment
             services.AddHttpContextAccessor();
