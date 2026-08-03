@@ -1,0 +1,12 @@
+{
+  "Database": {
+    "Provider": "Postgresql",
+    "ConnectionString": "Host=localhost;Port=5432;Database=prescriptionms;Username=postgres;Password=postgres"
+  },
+  "Keycloak": {
+    "Authority": "http://localhost:8080/realms/prescriptionms",
+    "ClientId": "prescriptionms-backend",
+    "ClientSecret": "dev-only-secret-change-me",
+    "RequireHttpsMetadata": false
+  }
+}

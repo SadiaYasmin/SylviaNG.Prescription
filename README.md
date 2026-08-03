@@ -113,18 +113,18 @@ This project follows **Clean Architecture** with **Domain-Driven Design (DDD)** 
 
 ### Configuration
 
-Update `appsettings.json` with your database and Keycloak settings:
+For local development, bring up Postgres + Keycloak via Docker Compose (see `SylviaNG.Prescription/Doc/local-dev-infrastructure.md` for full setup/verification steps), then copy `.env.example` → `.env` and `SylviaNG.Prescription/appsettings.Development.json.example` → `appsettings.Development.json`:
 
 ```json
 {
   "Database": {
     "Provider": "Postgresql",
-    "ConnectionString": "Host=localhost;Port=5432;Database=prescription_db;Username=user;Password=pass"
+    "ConnectionString": "Host=localhost;Port=5432;Database=prescriptionms;Username=postgres;Password=postgres"
   },
   "Keycloak": {
-    "Authority": "http://localhost:8082/realms/sylviang",
-    "ClientId": "sylviang-api",
-    "ClientSecret": "your-client-secret"
+    "Authority": "http://localhost:8080/realms/prescriptionms",
+    "ClientId": "prescriptionms-backend",
+    "ClientSecret": "dev-only-secret-change-me"
   }
 }
 ```
