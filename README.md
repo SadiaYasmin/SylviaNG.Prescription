@@ -2,7 +2,11 @@
 
 ## Overview
 
-The Prescription microservice is part of the SylviaNG ecosystem, responsible for managing prescription operations including job postings, candidate applications, interview scheduling, and hiring workflows.
+The Prescription microservice is part of the SylviaNG ecosystem, implementing **PrescriptionMS** — a hospital
+prescription/EMR system for Admin, Doctor, and Staff roles (see `Doc/feature.md` and `Doc/user_stories.md` for
+the full target spec). Authentication is real Keycloak-issued JWTs (see `Doc/auth-jwt.md`); the rest of the
+domain (Patients, Consultations, Prescriptions, Medicines, Templates, ...) is built feature-by-feature on top of
+the Clean Architecture/CQRS foundation described below.
 
 ## Technology Stack
 
@@ -10,11 +14,10 @@ The Prescription microservice is part of the SylviaNG ecosystem, responsible for
 - Entity Framework Core 10.0
 - PostgreSQL / SQL Server / Oracle (configurable)
 - Keycloak Authentication (JWT)
-- Apache Kafka for event-driven architecture
 - Finbuckle.MultiTenant for multi-tenancy support
 - MediatR for CQRS pattern
 - FluentValidation for input validation
-- AutoMapper for object mapping
+- Manual mapper extension methods for object mapping (no AutoMapper)
 - gRPC for inter-service communication
 
 ## Project Structure
@@ -31,18 +34,17 @@ SylviaNG.Prescription/
 │   │   ├── DependencyInjection.cs       # Application service registrations
 │   │   └── ValidationBehavior.cs        # MediatR pipeline validation behavior
 │   ├── Features/
-│   │   └── JobPostings/               # Feature module (follow this pattern for new features)
-│   │       ├── Commands/              # CQRS Commands (Create, Update, Delete + Handlers + Validators)
-│   │       ├── Models/                # DTOs (Request/Response models)
-│   │       └── Queries/               # CQRS Queries (GetAll, GetById, GetPaged + Handlers)
+│   │   └── Auth/                      # Feature module (follow this pattern for new features)
+│   │       ├── Commands/              # CQRS Commands (Login, Logout, RefreshToken, ... + Handlers + Validators)
+│   │       └── Models/                # DTOs (Request/Response models)
 │   ├── Interfaces/
-│   │   ├── Externals/                 # External service interfaces (ICoreGrpcClient)
-│   │   ├── Repositories/              # Repository interfaces (IJobPostingRepository)
-│   │   └── Services/                  # Service interfaces (IJobPostingService)
-│   ├── Mappings/                      # AutoMapper profiles
+│   │   ├── Externals/                 # External service interfaces (ICoreGrpcClient, IKeycloakTokenClient, IKeycloakAdminClient)
+│   │   ├── Repositories/              # Repository interfaces (IUserRepository)
+│   │   └── Services/                  # Service interfaces (IAuthService)
+│   ├── Mappings/                      # Manual mapper extension methods (no AutoMapper)
 │   └── Services/                      # Business logic service implementations
 ├── Domain/                            # Domain layer (entities, value objects, domain events)
-│   ├── Entities/                      # Business entities (JobPosting, JobApplication, Interview)
+│   ├── Entities/                      # Business entities (User; more land feature-by-feature)
 │   ├── Enums/                         # Domain enumerations
 │   ├── Events/                        # Domain events
 │   └── ValueObjects/                  # Value objects (if needed)
@@ -52,15 +54,14 @@ SylviaNG.Prescription/
 │   │   └── ApplicationDBContext.cs   # DbContext with multi-tenancy
 │   ├── Extensions/
 │   │   ├── DependencyInjection.cs     # Infrastructure service registrations
-│   │   └── GrpcExtensions.cs          # gRPC client registration
+│   │   ├── GrpcExtensions.cs          # gRPC client registration
+│   │   └── KeycloakExtensions.cs      # Keycloak admin/token client registration
 │   ├── Interceptors/                  # EF Core interceptors (Audit, UtcDateTime)
-│   ├── Kafka/                         # Kafka consumers (EmployeeEventConsumer)
 │   ├── MultiTenancy/                  # Tenant info model
 │   ├── Repositories/                  # Repository implementations
-│   └── Services/                      # External service implementations (CoreGrpcClient)
+│   └── Services/                      # External service implementations (CoreGrpcClient, KeycloakAdminClient, KeycloakTokenClient)
 ├── Controllers/                       # API controllers
-│   ├── JobPostingController.cs        # Job posting endpoints
-│   └── JobApplicationController.cs    # Job application endpoints
+│   └── AuthController.cs              # Login/refresh/logout/password-reset endpoints
 ├── Middlewares/                       # Custom middleware components
 │   ├── GlobalExceptionHandlerMiddleware.cs
 │   └── ResponseWrappingMiddleware.cs
@@ -95,7 +96,7 @@ This project follows **Clean Architecture** with **Domain-Driven Design (DDD)** 
 ├──────────────────────────────────────────────────┤
 │                    Domain                         │  ← Entities, Events, Enums
 ├──────────────────────────────────────────────────┤
-│                Infrastructure                     │  ← Data access, Kafka, gRPC
+│                Infrastructure                     │  ← Data access, Keycloak, gRPC
 │         (EF Core, Repositories, Interceptors)     │
 ├──────────────────────────────────────────────────┤
 │                SharedKernel                       │  ← Generic repo, Audit, Pagination
@@ -109,7 +110,6 @@ This project follows **Clean Architecture** with **Domain-Driven Design (DDD)** 
 - .NET 10.0 SDK
 - PostgreSQL / SQL Server / Oracle database
 - Keycloak instance for authentication
-- Apache Kafka (for employee sync events)
 
 ### Configuration
 
@@ -156,7 +156,6 @@ Once running, access Swagger UI at: `http://localhost:5208/swagger`
 - **Response wrapping middleware** — All responses wrapped in `{ hasError, decentMessage, errorDetails, content }`
 - **Audit logging** — All entities inherit from `Audit` base class
 - **UTC DateTime enforcement** via EF Core interceptor
-- **Event-driven architecture** with Kafka (employee sync)
 - **gRPC** for inter-service communication with Core microservice
 - **FluentValidation** integrated into MediatR pipeline
 
@@ -212,16 +211,17 @@ docker run -p 5208:5002 sylviang-prescription
 
 ## How to Add a New Feature
 
-Follow the existing `JobPostings` pattern:
+Follow the existing `Auth` feature's structure (see `Doc/auth-jwt.md` for what/why):
 
 1. **Domain** — Create entity in `Domain/Entities/` inheriting from `Audit`
 2. **Infrastructure** — Add `DbSet` in `ApplicationDBContext`, create configuration in `Configurations/`, create repository in `Repositories/`
-3. **Application** — Create feature folder in `Features/` with `Commands/`, `Queries/`, `Models/` subfolders
-4. **Mappings** — Add AutoMapper profile in `Mappings/`
+3. **Application** — Create feature folder in `Features/` with `Commands/` (and `Queries/` for a typical CRUD entity), `Models/` subfolders
+4. **Mappings** — Add a manual mapper extension method in `Mappings/` (no AutoMapper in this project)
 5. **Services** — Create service interface in `Interfaces/Services/` and implementation in `Services/`
 6. **DI** — Register repository in `Infrastructure/Extensions/DependencyInjection.cs` and service in `Application/Extensions/DependencyInjection.cs`
 7. **Controller** — Create controller in `Controllers/` using MediatR for CQRS
 8. **Tests** — Add service, controller, and validator tests in `Tests/`
+9. **Docs** — Write `Doc/<feature-name>.md`: what the feature is, what it does, why it was built
 
 ## Related Projects
 

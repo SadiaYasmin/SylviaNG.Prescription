@@ -16,7 +16,7 @@ This change adds **zero business logic** — no domain entities, no EF migration
 Keycloak realm `prescriptionms` (auto-imported from `docker/keycloak/realm-export.json`):
 - Client `prescriptionms-backend` (confidential, dev-only fixed secret, direct-grant enabled for manual token testing)
 - Realm roles: `Admin`, `Doctor`, `Staff`
-- Seeded test users (all password `DevPassword123!`): `admin.dev` (Admin), `doctor.dev` (Doctor), `staff.dev` (Staff)
+- **No users are pre-seeded via realm import anymore.** The backend seeds exactly one Admin account on its own startup (username/password from `AdminSeed:Username`/`AdminSeed:Password` config — never hardcoded here). See `Doc/auth-jwt.md` for how and why.
 
 ## Prerequisites
 - Docker Desktop running.
@@ -41,26 +41,24 @@ docker compose ps   # both containers should show healthy/running
    docker exec -it sylviang-prescription-postgres psql -U postgres -c "\l"
    ```
    Expect both `prescriptionms` and `keycloak` listed.
-2. Open `http://localhost:8080`, log into the admin console with `KEYCLOAK_ADMIN_USER`/`KEYCLOAK_ADMIN_PASSWORD` from `.env` — confirm realm `prescriptionms`, client `prescriptionms-backend`, roles `Admin`/`Doctor`/`Staff`, and the 3 seeded users all exist.
-3. Request a real token via Keycloak's direct-grant endpoint:
+2. Open `http://localhost:8080`, log into the admin console with `KEYCLOAK_ADMIN_USER`/`KEYCLOAK_ADMIN_PASSWORD` from `.env` — confirm realm `prescriptionms`, client `prescriptionms-backend`, and roles `Admin`/`Doctor`/`Staff` exist. No app users exist yet at this point — the backend seeds its one Admin account the first time it starts (see `Doc/auth-jwt.md`).
+3. After running the API once (step 4 below) so the Admin account gets seeded, request a real token via Keycloak's direct-grant endpoint:
    ```bash
    curl -X POST http://localhost:8080/realms/prescriptionms/protocol/openid-connect/token \
      -d grant_type=password \
      -d client_id=prescriptionms-backend \
      -d client_secret=dev-only-secret-change-me \
-     -d username=doctor.dev \
-     -d password=DevPassword123!
+     -d username=admin \
+     -d password=admin123
    ```
-   Expect a JSON response containing a signed `access_token` (decode at jwt.io to see `iss`, `aud`, and the `Doctor` role claim).
+   (username/password are whatever `AdminSeed:Username`/`AdminSeed:Password` are set to locally.) Expect a JSON response containing a signed `access_token` (decode at jwt.io to see `iss`, `aud`, and the `Admin` role claim).
 4. Run the API:
    ```bash
    cd SylviaNG.Prescription
    dotnet run
    ```
    Expect it to start cleanly (no more empty-connection-string exception) with Swagger at `http://localhost:5208/swagger`.
-5. **Stretch check** (proves the Keycloak↔JWT wiring end-to-end, no new code needed): paste the `access_token` from step 3 into Swagger's Authorize button and call an existing endpoint, e.g. `GET prescription/job-posting`.
-   - **Without a token**: expect `401`.
-   - **With a valid token**: expect a **500** with `Npgsql.PostgresException: 42P01: relation "JobPostings" does not exist` in the app's console log — this is the *correct* outcome, not a bug. It proves the request passed authentication (`Token validated successfully` in the log) and reached a real Postgres query — it fails only because **no EF migrations exist anywhere in this repo yet** (confirmed pre-existing gap, not introduced here), so no tables exist in `prescriptionms`. Getting an actual `200` would require running `dotnet ef migrations add`/`database update` first, which is out of scope for this branch.
+5. **Stretch check** (proves the Keycloak↔JWT wiring end-to-end): paste the `access_token` from step 3 into Swagger's Authorize button and call an authenticated endpoint. **Superseded**: at the time this doc was written, no real endpoints or migrations existed yet, so this step just proved authentication reached a (deliberately failing) Postgres query. Both now exist for real — just use the app's own `POST prescription/auth/login` (Epic A) instead of this Keycloak-direct-grant workaround for anything beyond debugging the raw JWT wiring.
    - This is *not* the app's own login flow (that's Epic A) — just borrowing Keycloak's direct-grant endpoint as a test-token source.
    - **Realm-export note**: the client needs an `oidc-audience-mapper` protocol mapper (included in `docker/keycloak/realm-export.json`) so issued tokens carry an `aud` claim matching `prescriptionms-backend` — without it, `AuthenticationExtensions.cs`'s `ValidAudience` check rejects every token with a 401 even though the token is otherwise valid. Discovered and fixed during verification of this branch.
 

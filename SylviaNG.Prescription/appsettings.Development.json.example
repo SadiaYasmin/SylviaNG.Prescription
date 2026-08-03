@@ -5,8 +5,13 @@
   },
   "Keycloak": {
     "Authority": "http://localhost:8080/realms/prescriptionms",
+    "Realm": "prescriptionms",
     "ClientId": "prescriptionms-backend",
     "ClientSecret": "dev-only-secret-change-me",
     "RequireHttpsMetadata": false
+  },
+  "AdminSeed": {
+    "Username": "admin",
+    "Password": "admin123"
   }
 }
