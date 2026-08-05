@@ -1,0 +1,10 @@
+using SylviaNG.Prescription.Domain.Entities;
+using SylviaNG.Prescription.SharedKernel.Generic;
+
+namespace SylviaNG.Prescription.Application.Interfaces.Repositories
+{
+    public interface IStaffRepository : IRepository<Staff>
+    {
+        Task<Staff?> GetByUserIdAsync(long userId);
+    }
+}
