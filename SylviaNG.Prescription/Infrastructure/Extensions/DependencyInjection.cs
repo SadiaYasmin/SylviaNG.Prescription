@@ -69,6 +69,7 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
             // Adding DI of repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IDoctorRepository, DoctorRepository>();
+            services.AddScoped<IStaffRepository, StaffRepository>();
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
