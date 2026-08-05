@@ -6,3 +6,10 @@ public enum UserRoleEnum
     Doctor,
     Staff
 }
+
+public enum GenderEnum
+{
+    Male,
+    Female,
+    Other
+}
