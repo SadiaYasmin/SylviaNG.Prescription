@@ -79,6 +79,17 @@ namespace SylviaNG.Prescription.Infrastructure.Services
             response.EnsureSuccessStatusCode();
         }
 
+        public async Task SetUserEnabledAsync(string keycloakId, bool enabled)
+        {
+            await AuthorizeAsync();
+
+            var body = new { enabled };
+
+            using var response = await _httpClient.PutAsJsonAsync(
+                $"admin/realms/{_realm}/users/{keycloakId}", body);
+            response.EnsureSuccessStatusCode();
+        }
+
         private async Task AssignRealmRoleAsync(string keycloakId, string realmRole)
         {
             using var roleResponse = await _httpClient.GetAsync($"admin/realms/{_realm}/roles/{realmRole}");

@@ -55,6 +55,7 @@ namespace SylviaNG.Prescription.Infrastructure.Data
         #region Tables
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Doctor> Doctors { get; set; }
 
         #endregion
 
