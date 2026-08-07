@@ -92,12 +92,13 @@ doctors, so Doctor Management's roster (Epic I) is a direct prerequisite.
 - **Frontend**: `ng build` succeeds (`staff-management-module` lazy chunk emitted
   alongside `doctor-management-module`), `ng test` — 63/63 passing (56 pre-existing
   + 7 new, covering `StaffService`'s HTTP contract).
-- **Not verified this session**: a manual end-to-end smoke test against the local
-  Postgres+Keycloak stack (`docker compose up`) and the `AddStaff` EF migration
-  actually being applied to a live database. Docker Desktop's daemon did not come up
-  in the session's environment after several minutes, so this remains a manual
-  follow-up — run `dotnet ef database update` against the local stack and walk the
-  same admin/doctor flows Doctor Management's writeup describes (create → doctor
-  logs in → doctor sees only their assigned staff and gets 403 on admin routes →
-  admin searches/filters/edits/reassigns → deactivates → login fails) before
-  treating this feature as fully verified end-to-end.
+- **`AddStaff` migration applied** to the local Postgres database
+  (`dotnet ef database update`) — `Staff`/`StaffDoctors` tables and their indexes
+  now exist. This was initially missed (flagged as blocked by Docker not starting
+  during the build session) and caught when the live `staff-list` page threw
+  "Something went wrong!" — a 500 from the roster query hitting tables that didn't
+  exist yet. A full manual UI walkthrough of the admin/doctor flows (create →
+  doctor logs in → doctor sees only their assigned staff and gets 403 on admin
+  routes → admin searches/filters/edits/reassigns → deactivates → login fails),
+  matching Doctor Management's verified writeup, is still worth doing as a final
+  pass.
