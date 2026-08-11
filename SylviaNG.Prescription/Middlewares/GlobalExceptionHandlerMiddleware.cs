@@ -35,6 +35,11 @@ namespace SylviaNG.Prescription.Middlewares
                 _logger.LogWarning(ex, "Login attempt failed: invalid credentials.");
                 await HandleExceptionAsync(context, StatusCodes.Status401Unauthorized, ex.Message);
             }
+            catch (BadRequestException ex)
+            {
+                _logger.LogWarning(ex, "Bad request.");
+                await HandleExceptionAsync(context, StatusCodes.Status400BadRequest, ex.Message);
+            }
             catch (FluentValidation.ValidationException ex)
             {
                 _logger.LogWarning(ex, "Validation failed.");

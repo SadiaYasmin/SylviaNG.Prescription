@@ -97,6 +97,9 @@ await using (var seedScope = app.Services.CreateAsyncScope())
 {
     var adminSeeder = seedScope.ServiceProvider.GetRequiredService<SylviaNG.Prescription.Application.Services.AdminAccountSeeder>();
     await adminSeeder.SeedAsync();
+
+    var templateSeeder = seedScope.ServiceProvider.GetRequiredService<SylviaNG.Prescription.Application.Services.TemplateEngineSeeder>();
+    await templateSeeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.
