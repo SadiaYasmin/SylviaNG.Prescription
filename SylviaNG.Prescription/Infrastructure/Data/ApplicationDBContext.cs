@@ -58,6 +58,8 @@ namespace SylviaNG.Prescription.Infrastructure.Data
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Staff> Staff { get; set; }
         public DbSet<StaffDoctor> StaffDoctors { get; set; }
+        public DbSet<PrescriptionTemplate> Templates { get; set; }
+        public DbSet<HospitalSettings> HospitalSettings { get; set; }
 
         #endregion
 
