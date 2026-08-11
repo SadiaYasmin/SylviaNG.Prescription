@@ -49,7 +49,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffList
             var totalCount = await joined.CountAsync(cancellationToken);
 
             var pageItems = await joined
-                .OrderBy(x => x.s.FullName)
+                .OrderByDescending(x => x.s.StaffId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);

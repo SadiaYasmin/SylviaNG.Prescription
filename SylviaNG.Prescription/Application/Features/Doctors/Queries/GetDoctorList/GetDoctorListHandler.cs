@@ -46,7 +46,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorLi
             var totalCount = await joined.CountAsync(cancellationToken);
 
             var pageItems = await joined
-                .OrderBy(x => x.d.FullName)
+                .OrderByDescending(x => x.d.DoctorId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
