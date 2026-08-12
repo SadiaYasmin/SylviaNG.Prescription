@@ -1,10 +1,12 @@
 using Finbuckle.MultiTenant.AspNetCore.Extensions;
 using Finbuckle.MultiTenant.Extensions;
 using Microsoft.EntityFrameworkCore;
+using SylviaNG.Prescription.Application.Common.Services;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
 using SylviaNG.Prescription.Infrastructure.Data;
 using SylviaNG.Prescription.Infrastructure.Interceptors;
 using SylviaNG.Prescription.Infrastructure.Repositories;
+using SylviaNG.Prescription.Infrastructure.Services;
 using SylviaNG.Prescription.SharedKernel.Generic;
 using SylviaNG.Prescription.SharedKernel.Utils;
 
@@ -70,11 +72,16 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IDoctorRepository, DoctorRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
+            services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<ITemplateRepository, TemplateRepository>();
             services.AddScoped<IHospitalSettingsRepository, HospitalSettingsRepository>();
+            services.AddScoped<IConsultationRepository, ConsultationRepository>();
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            // Register application services backed by infrastructure (Epic C)
+            services.AddScoped<ISequenceGenerator, SequenceGenerator>();
 
             return services;
         }
