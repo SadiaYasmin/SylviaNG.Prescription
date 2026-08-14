@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SylviaNG.Prescription.Application.Features.Patients.Commands.CreatePatient;
 using SylviaNG.Prescription.Application.Features.Patients.Commands.UpdatePatient;
 using SylviaNG.Prescription.Application.Features.Patients.Models;
+using SylviaNG.Prescription.Application.Features.Patients.Queries.GetDoctorPatientQueue;
 using SylviaNG.Prescription.Application.Features.Patients.Queries.GetPatientDetails;
 using SylviaNG.Prescription.Application.Features.Patients.Queries.GetPatientList;
 
@@ -64,6 +65,21 @@ namespace SylviaNG.Prescription.Controllers
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var result = await _mediator.Send(new GetPatientDetailsQuery(id, keycloakId));
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Create Prescription's "Patient Filter" (US-019 follow-up) — a doctor's own
+        /// staff-scoped roster, annotated with each patient's today-with-me consultation
+        /// status. Doctor-only; kept off the shared <see cref="GetList"/> endpoint so
+        /// Staff/Admin's patient-list behavior can't regress.
+        /// </summary>
+        [Authorize(Roles = "Doctor")]
+        [HttpGet("doctor-queue")]
+        public async Task<ActionResult<DoctorPatientQueueResponse>> GetDoctorQueue([FromQuery] DoctorPatientQueueRequest request)
+        {
+            var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _mediator.Send(new GetDoctorPatientQueueQuery(keycloakId, request));
             return Ok(result);
         }
     }

@@ -20,7 +20,9 @@ public class CreateConsultationHandlerTests
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IStaffRepository> _staffRepositoryMock = new();
     private readonly Mock<IDoctorRepository> _doctorRepositoryMock = new();
+    private readonly Mock<IPatientRepository> _patientRepositoryMock = new();
     private readonly Mock<IConsultationRepository> _consultationRepositoryMock = new();
+    private readonly Mock<IPrescriptionRepository> _prescriptionRepositoryMock = new();
     private readonly Mock<ISequenceGenerator> _sequenceGeneratorMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly ApplicationDBContext _context = InMemoryDbContextFactory.Create();
@@ -40,11 +42,15 @@ public class CreateConsultationHandlerTests
         _context.StaffDoctors.Add(new StaffDoctor { StaffDoctorId = 1, StaffId = 3, DoctorId = 10 });
         _context.SaveChanges();
 
+        _prescriptionRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<PrescriptionRecord>().BuildMock());
+
         _handler = new CreateConsultationHandler(
             _userRepositoryMock.Object,
             _staffRepositoryMock.Object,
             _doctorRepositoryMock.Object,
+            _patientRepositoryMock.Object,
             _consultationRepositoryMock.Object,
+            _prescriptionRepositoryMock.Object,
             _sequenceGeneratorMock.Object,
             _unitOfWorkMock.Object);
     }
@@ -221,5 +227,65 @@ public class CreateConsultationHandlerTests
         // Assert
         result.DuplicateFound.Should().BeFalse();
         _consultationRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Consultation>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUnfinishedDraftExistsAndNotForced_ShouldReturnUnfinishedDraftFoundWithoutCreating()
+    {
+        // Arrange: a Draft-status consultation for the same patient+doctor (from any day)
+        // is a different guard (US-012) from the active-duplicate one (US-011) above.
+        var draftConsultation = new Consultation
+        {
+            ConsultationId = 77,
+            PatientId = 1,
+            DoctorId = 10,
+            VisitDate = Today.AddDays(-2),
+            Status = ConsultationStatusEnum.Draft,
+            DisplayCode = $"CN-{Today.Year}-0007",
+            TokenNumber = "T-07"
+        };
+        SetUpExistingConsultations(draftConsultation);
+        _prescriptionRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(new List<PrescriptionRecord>
+        {
+            new() { PrescriptionId = 500, ConsultationId = 77, PatientId = 1, DoctorId = 10, DisplayCode = $"RX-{Today.Year}-0001" }
+        }.BuildMock());
+
+        // Act
+        var result = await _handler.Handle(new CreateConsultationCommand("kc-staff-3", ValidRequest(force: false)), default);
+
+        // Assert
+        result.UnfinishedDraftFound.Should().BeTrue();
+        result.UnfinishedDrafts.Should().ContainSingle(d => d.PrescriptionId == 500);
+        result.Consultation.Should().BeNull();
+        result.DuplicateFound.Should().BeFalse();
+        _consultationRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Consultation>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUnfinishedDraftExistsAndForced_ShouldProceedToCreate()
+    {
+        // Arrange
+        var draftConsultation = new Consultation
+        {
+            ConsultationId = 77,
+            PatientId = 1,
+            DoctorId = 10,
+            VisitDate = Today.AddDays(-2),
+            Status = ConsultationStatusEnum.Draft,
+            DisplayCode = $"CN-{Today.Year}-0007",
+            TokenNumber = "T-07"
+        };
+        SetUpExistingConsultations(draftConsultation);
+        _sequenceGeneratorMock.Setup(s => s.GetNextAsync(It.IsAny<string>(), It.IsAny<string>(), default)).ReturnsAsync(1);
+
+        // Act
+        var result = await _handler.Handle(new CreateConsultationCommand("kc-staff-3", ValidRequest(force: true)), default);
+
+        // Assert
+        result.UnfinishedDraftFound.Should().BeFalse();
+        result.DuplicateFound.Should().BeFalse();
+        _consultationRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Consultation>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 }

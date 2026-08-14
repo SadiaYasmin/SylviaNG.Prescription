@@ -83,6 +83,7 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
             var waitingCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Waiting, cancellationToken);
             var inProgressCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.InConsultation, cancellationToken);
             var completedCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Completed, cancellationToken);
+            var draftCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Draft, cancellationToken);
 
             var pageItems = await joined
                 .OrderByDescending(x => x.c.ConsultationId)
@@ -103,7 +104,8 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
                     Total = totalCount,
                     Waiting = waitingCount,
                     InProgress = inProgressCount,
-                    Completed = completedCount
+                    Completed = completedCount,
+                    Draft = draftCount
                 }
             };
         }

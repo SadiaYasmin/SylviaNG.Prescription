@@ -23,5 +23,16 @@ public class Doctor : Audit
     public DateOnly? JoiningDate { get; set; }
     public string? PhotoBase64 { get; set; }
 
+    /// <summary>
+    /// Minimal Epic K stub, added by Epic D since finalize (US-026) is blocked without a
+    /// preferred template and a signature on file. Full profile self-service (photo/license
+    /// edit, AI background removal) is still Epic K's job; this is just the two fields
+    /// Prescription needs. <see cref="PreferredTemplateId"/> has no navigation property,
+    /// same ids-only style as every other cross-entity reference in this codebase.
+    /// </summary>
+    public long? PreferredTemplateId { get; set; }
+    public string? SignatureBase64 { get; set; }
+    public TemplateLanguageEnum? PreferredLanguage { get; set; }
+
     public User? User { get; set; }
 }

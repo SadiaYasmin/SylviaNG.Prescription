@@ -15,7 +15,7 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Models
         public string PatientPhone { get; set; } = string.Empty;
         public long DoctorId { get; set; }
         public string DoctorName { get; set; } = string.Empty;
-        public long RegisteredByStaffId { get; set; }
+        public long? RegisteredByStaffId { get; set; }
         public string RegisteredByName { get; set; } = string.Empty;
     }
 }

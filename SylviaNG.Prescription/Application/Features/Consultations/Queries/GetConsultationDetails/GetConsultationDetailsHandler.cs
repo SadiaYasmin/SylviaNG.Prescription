@@ -33,13 +33,17 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
 
             var patient = await _patientRepository.GetByIdAsync(consultation.PatientId);
             var doctor = await _doctorRepository.GetByIdAsync(consultation.DoctorId);
-            var staff = await _staffRepository.GetByIdAsync(consultation.RegisteredByStaffId);
+
+            // Null for a quick-create walk-in (Epic D) — no staff check-in involved.
+            var staff = consultation.RegisteredByStaffId.HasValue
+                ? await _staffRepository.GetByIdAsync(consultation.RegisteredByStaffId.Value)
+                : null;
 
             return consultation.ToDetailsResponse(
                 patient?.Name ?? string.Empty,
                 patient?.Phone ?? string.Empty,
                 doctor?.FullName ?? string.Empty,
-                staff?.FullName ?? string.Empty);
+                staff?.FullName ?? "Quick Create (Doctor)");
         }
     }
 }
