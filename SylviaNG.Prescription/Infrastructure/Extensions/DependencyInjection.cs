@@ -76,6 +76,9 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
             services.AddScoped<ITemplateRepository, TemplateRepository>();
             services.AddScoped<IHospitalSettingsRepository, HospitalSettingsRepository>();
             services.AddScoped<IConsultationRepository, ConsultationRepository>();
+            services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+            services.AddScoped<IMedicineRepository, MedicineRepository>();
+            services.AddScoped<IQuickAddPresetRepository, QuickAddPresetRepository>();
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();

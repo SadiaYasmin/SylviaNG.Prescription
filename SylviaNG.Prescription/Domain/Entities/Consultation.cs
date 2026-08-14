@@ -20,7 +20,13 @@ public class Consultation : Audit
     public string DisplayCode { get; set; } = string.Empty;
     public long PatientId { get; set; }
     public long DoctorId { get; set; }
-    public long RegisteredByStaffId { get; set; }
+
+    /// <summary>
+    /// Null for a quick-create walk-in (US-019, Epic D) — a doctor authoring for a patient
+    /// directly, with no staff check-in involved. Non-null for every consultation created
+    /// through the normal Staff check-in flow (US-010).
+    /// </summary>
+    public long? RegisteredByStaffId { get; set; }
     public DateOnly VisitDate { get; set; }
     public string TokenNumber { get; set; } = string.Empty;
 

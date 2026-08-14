@@ -13,9 +13,12 @@ using SylviaNG.Prescription.Application.Features.Templates.Queries.GetTemplateLi
 namespace SylviaNG.Prescription.Controllers
 {
     /// <summary>
-    /// Admin-only Prescription Template Engine management (Epic H / US-045-052).
+    /// Prescription Template Engine management (Epic H / US-045-052) — Admin-only for every
+    /// write action. The two GET (read) actions were opened to Doctor too (Epic D) so a
+    /// doctor can list enabled templates and read one's config for the preferred-template
+    /// picker (US-064) — no class-level [Authorize] any more, per-action instead, same
+    /// reasoning as ConsultationsController.
     /// </summary>
-    [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("prescription/templates")]
     public class TemplatesController : ControllerBase
@@ -27,6 +30,7 @@ namespace SylviaNG.Prescription.Controllers
             _mediator = mediator;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<TemplateDetailsResponse>> Create([FromBody] CreateTemplateRequest request)
         {
@@ -34,6 +38,7 @@ namespace SylviaNG.Prescription.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<TemplateDetailsResponse>> Update(long id, [FromBody] UpdateTemplateRequest request)
         {
@@ -41,6 +46,7 @@ namespace SylviaNG.Prescription.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("{id}/duplicate")]
         public async Task<ActionResult<TemplateDetailsResponse>> Duplicate(long id)
         {
@@ -48,6 +54,7 @@ namespace SylviaNG.Prescription.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPatch("{id}/toggle-enabled")]
         public async Task<ActionResult<TemplateSummaryResponse>> ToggleEnabled(long id)
         {
@@ -55,6 +62,7 @@ namespace SylviaNG.Prescription.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(long id)
         {
@@ -62,13 +70,15 @@ namespace SylviaNG.Prescription.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin,Doctor")]
         [HttpGet]
-        public async Task<ActionResult<TemplateListResponse>> GetList()
+        public async Task<ActionResult<TemplateListResponse>> GetList([FromQuery] bool enabledOnly = false)
         {
-            var result = await _mediator.Send(new GetTemplateListQuery());
+            var result = await _mediator.Send(new GetTemplateListQuery(enabledOnly));
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin,Doctor")]
         [HttpGet("{id}")]
         public async Task<ActionResult<TemplateDetailsResponse>> GetDetails(long id)
         {

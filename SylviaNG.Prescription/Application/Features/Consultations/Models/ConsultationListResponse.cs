@@ -1,10 +1,11 @@
 namespace SylviaNG.Prescription.Application.Features.Consultations.Models
 {
     /// <summary>
-    /// Stat-tile counts (Total/Waiting/InProgress/Completed) computed over the FILTERED set
-    /// (date/doctor/status/search all applied) — not global roster counts — matching the
-    /// reference prototype's behavior. "InProgress" maps to ConsultationStatusEnum.InConsultation;
-    /// there's no "Draft" bucket since that status doesn't exist yet (out of scope for this epic).
+    /// Stat-tile counts (Total/Waiting/InProgress/Completed/Draft) computed over the FILTERED
+    /// set (date/doctor/status/search all applied) — not global roster counts — matching the
+    /// reference prototype's behavior. "InProgress" maps to ConsultationStatusEnum.InConsultation.
+    /// "Draft" (Epic D) is a consultation whose prescription was saved as a draft — out of the
+    /// live queue but not yet completed.
     /// </summary>
     public class ConsultationListSummary
     {
@@ -12,6 +13,7 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Models
         public int Waiting { get; set; }
         public int InProgress { get; set; }
         public int Completed { get; set; }
+        public int Draft { get; set; }
     }
 
     public class ConsultationListResponse

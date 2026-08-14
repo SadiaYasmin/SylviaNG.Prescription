@@ -17,13 +17,17 @@ namespace SylviaNG.Prescription.Application.Features.Templates.Queries.GetTempla
 
         public async Task<TemplateListResponse> Handle(GetTemplateListQuery query, CancellationToken cancellationToken)
         {
-            var templates = await _templateRepository.Query()
+            var templates = _templateRepository.Query();
+            if (query.EnabledOnly)
+                templates = templates.Where(t => t.Enabled);
+
+            var results = await templates
                 .OrderBy(t => t.Name)
                 .ToListAsync(cancellationToken);
 
             return new TemplateListResponse
             {
-                Templates = templates.Select(t => t.ToSummaryResponse()).ToList()
+                Templates = results.Select(t => t.ToSummaryResponse()).ToList()
             };
         }
     }

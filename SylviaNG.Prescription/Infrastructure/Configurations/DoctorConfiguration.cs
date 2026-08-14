@@ -28,6 +28,10 @@ namespace SylviaNG.Prescription.Infrastructure.Configurations
                 .HasConversion<string>()
                 .HasMaxLength(10);
 
+            builder.Property(d => d.PreferredLanguage)
+                .HasConversion<string>()
+                .HasMaxLength(10);
+
             builder.HasIndex(d => d.UserId).IsUnique();
             builder.HasIndex(d => d.LicenseNumber).IsUnique();
 
@@ -35,6 +39,15 @@ namespace SylviaNG.Prescription.Infrastructure.Configurations
                 .WithMany()
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // SetNull (not Restrict) so deleting a template a doctor prefers (US-050) can't
+            // ever fail on this FK — it silently falls the doctor back to "no preference"
+            // (the finalize-validation checklist then prompts them to pick again), matching
+            // US-050's "falls back to default" intent without touching Epic H's delete code.
+            builder.HasOne<PrescriptionTemplate>()
+                .WithMany()
+                .HasForeignKey(d => d.PreferredTemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

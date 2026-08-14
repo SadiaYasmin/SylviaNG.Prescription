@@ -100,6 +100,9 @@ await using (var seedScope = app.Services.CreateAsyncScope())
 
     var templateSeeder = seedScope.ServiceProvider.GetRequiredService<SylviaNG.Prescription.Application.Services.TemplateEngineSeeder>();
     await templateSeeder.SeedAsync();
+
+    var medicineSeeder = seedScope.ServiceProvider.GetRequiredService<SylviaNG.Prescription.Application.Services.MedicineCatalogSeeder>();
+    await medicineSeeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.
