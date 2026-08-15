@@ -1,10 +1,8 @@
 namespace SylviaNG.Prescription.Application.Features.Doctors.Models
 {
     /// <summary>
-    /// Per-doctor performance drill-down (US-055). Every field here is a real,
-    /// stably-shaped aggregate — currently zero/empty because Consultation/Prescription
-    /// entities don't exist yet (Epic C/D). Once those land, these queries get real
-    /// joins; this response contract does not need to change.
+    /// Per-doctor performance drill-down (US-055, filled in for real by Epic M/US-073 now
+    /// that Consultation/Prescription exist — see <c>GetDoctorDetailsHandler</c>).
     /// </summary>
     public class DoctorPerformanceStats
     {
@@ -18,6 +16,20 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
         public List<DoctorTopMedicine> TopMedicines { get; set; } = new();
         public List<DoctorRecentPrescription> RecentPrescriptions { get; set; } = new();
         public List<DoctorActivityTrendPoint> ActivityTrend { get; set; } = new();
+
+        /// <summary>
+        /// US-073's busiest-consultation-hours histogram — always 24 entries (Hour 0–23),
+        /// bucketed off <see cref="SylviaNG.Prescription.Domain.Entities.Consultation.CheckInAt"/>
+        /// (never <c>Audit.CreatedAt</c>, which is never populated anywhere in this codebase).
+        /// Reported in UTC hour-of-day — there is no hospital-timezone setting to convert to.
+        /// </summary>
+        public List<HourBucket> BusiestHours { get; set; } = new();
+    }
+
+    public class HourBucket
+    {
+        public int Hour { get; set; }
+        public int Count { get; set; }
     }
 
     public class DoctorTopMedicine
