@@ -66,6 +66,7 @@ namespace SylviaNG.Prescription.Infrastructure.Data
         public DbSet<PrescriptionRecord> Prescriptions { get; set; }
         public DbSet<Medicine> Medicines { get; set; }
         public DbSet<QuickAddPreset> QuickAddPresets { get; set; }
+        public DbSet<DoctorQuickAddSeedState> DoctorQuickAddSeedStates { get; set; }
 
         #endregion
 
