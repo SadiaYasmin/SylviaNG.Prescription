@@ -21,7 +21,7 @@ public class Doctor : Audit
     public int? ExperienceYears { get; set; }
     public GenderEnum? Gender { get; set; }
     public DateOnly? JoiningDate { get; set; }
-    public string? PhotoBase64 { get; set; }
+    public string? PhotoUrl { get; set; }
 
     /// <summary>
     /// Minimal Epic K stub, added by Epic D since finalize (US-026) is blocked without a
@@ -31,7 +31,7 @@ public class Doctor : Audit
     /// same ids-only style as every other cross-entity reference in this codebase.
     /// </summary>
     public long? PreferredTemplateId { get; set; }
-    public string? SignatureBase64 { get; set; }
+    public string? SignatureUrl { get; set; }
     public TemplateLanguageEnum? PreferredLanguage { get; set; }
 
     public User? User { get; set; }

@@ -22,7 +22,7 @@ namespace SylviaNG.Prescription.Application.Mappings
                 ExperienceYears = doctor.ExperienceYears,
                 Gender = doctor.Gender,
                 JoiningDate = doctor.JoiningDate,
-                PhotoBase64 = doctor.PhotoBase64,
+                PhotoUrl = doctor.PhotoUrl,
                 IsActive = user.IsActive
             };
         }

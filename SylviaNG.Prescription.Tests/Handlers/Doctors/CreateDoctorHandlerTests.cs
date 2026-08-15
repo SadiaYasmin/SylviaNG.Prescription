@@ -17,12 +17,14 @@ public class CreateDoctorHandlerTests
 {
     private readonly Mock<IAuthService> _authServiceMock = new();
     private readonly Mock<IDoctorRepository> _doctorRepositoryMock = new();
+    private readonly Mock<IFileStorageService> _fileStorageServiceMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly CreateDoctorHandler _handler;
 
     public CreateDoctorHandlerTests()
     {
-        _handler = new CreateDoctorHandler(_authServiceMock.Object, _doctorRepositoryMock.Object, _unitOfWorkMock.Object);
+        _handler = new CreateDoctorHandler(
+            _authServiceMock.Object, _doctorRepositoryMock.Object, _fileStorageServiceMock.Object, _unitOfWorkMock.Object);
     }
 
     private static CreateDoctorRequest ValidRequest() => new()

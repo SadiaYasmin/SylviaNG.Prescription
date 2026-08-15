@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SylviaNG.Prescription.Application.Common.Exceptions;
 using SylviaNG.Prescription.Application.Features.HospitalSettings.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.Application.Mappings;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
@@ -15,11 +16,16 @@ namespace SylviaNG.Prescription.Application.Features.HospitalSettings.Commands.U
     public class UpdateHospitalSettingsHandler : IRequestHandler<UpdateHospitalSettingsCommand, HospitalSettingsResponse>
     {
         private readonly IHospitalSettingsRepository _hospitalSettingsRepository;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public UpdateHospitalSettingsHandler(IHospitalSettingsRepository hospitalSettingsRepository, IUnitOfWork unitOfWork)
+        public UpdateHospitalSettingsHandler(
+            IHospitalSettingsRepository hospitalSettingsRepository,
+            IFileStorageService fileStorageService,
+            IUnitOfWork unitOfWork)
         {
             _hospitalSettingsRepository = hospitalSettingsRepository;
+            _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
@@ -32,7 +38,6 @@ namespace SylviaNG.Prescription.Application.Features.HospitalSettings.Commands.U
             var request = command.Request;
 
             settings.Name = request.Name;
-            settings.LogoBase64 = request.LogoBase64;
             settings.Address = request.Address;
             settings.Phone = request.Phone;
             settings.EmergencyNumber = request.EmergencyNumber;
@@ -41,7 +46,21 @@ namespace SylviaNG.Prescription.Application.Features.HospitalSettings.Commands.U
             settings.Slogan = request.Slogan;
             settings.SloganBn = request.SloganBn;
             settings.LicenseNumber = request.LicenseNumber;
-            settings.SealBase64 = request.SealBase64;
+
+            // US-083: a null Logo/SealBase64 leaves the current image untouched (the settings
+            // form only carries a value when the admin actually picked a new file) — an empty
+            // string is the explicit "remove" signal, matching the Remove button's intent.
+            if (request.LogoBase64 is not null)
+            {
+                await _fileStorageService.DeleteAsync(settings.LogoUrl);
+                settings.LogoUrl = await _fileStorageService.SaveImageAsync(request.LogoBase64, "hospital-logo", cancellationToken);
+            }
+
+            if (request.SealBase64 is not null)
+            {
+                await _fileStorageService.DeleteAsync(settings.SealUrl);
+                settings.SealUrl = await _fileStorageService.SaveImageAsync(request.SealBase64, "hospital-seal", cancellationToken);
+            }
 
             _hospitalSettingsRepository.Update(settings);
             await _unitOfWork.SaveChangesAsync();

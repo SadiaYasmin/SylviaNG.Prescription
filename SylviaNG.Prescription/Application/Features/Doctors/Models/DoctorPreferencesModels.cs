@@ -10,7 +10,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
     public class DoctorPreferencesResponse
     {
         public long? PreferredTemplateId { get; set; }
-        public string? SignatureBase64 { get; set; }
+        public string? SignatureUrl { get; set; }
         public TemplateLanguageEnum? PreferredLanguage { get; set; }
     }
 

@@ -114,6 +114,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 
+// US-083: serves wwwroot/uploads/* (doctor photos/signatures, hospital logo/seal) as plain
+// URLs. Placed ahead of auth/response-wrapping — uploaded images are public static assets,
+// not API responses.
+app.UseStaticFiles();
+
 app.UseMiddleware<ResponseWrappingMiddleware>();
 
 app.UseAuthentication();

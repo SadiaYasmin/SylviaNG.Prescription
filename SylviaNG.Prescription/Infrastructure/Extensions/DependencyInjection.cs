@@ -3,6 +3,7 @@ using Finbuckle.MultiTenant.Extensions;
 using Microsoft.EntityFrameworkCore;
 using SylviaNG.Prescription.Application.Common.Services;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.Infrastructure.Data;
 using SylviaNG.Prescription.Infrastructure.Interceptors;
 using SylviaNG.Prescription.Infrastructure.Repositories;
@@ -85,6 +86,9 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
 
             // Register application services backed by infrastructure (Epic C)
             services.AddScoped<ISequenceGenerator, SequenceGenerator>();
+
+            // US-083: local-disk-backed image storage
+            services.AddScoped<IFileStorageService, LocalDiskFileStorageService>();
 
             return services;
         }

@@ -17,7 +17,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
         public int? ExperienceYears { get; set; }
         public GenderEnum? Gender { get; set; }
         public DateOnly? JoiningDate { get; set; }
-        public string? PhotoBase64 { get; set; }
+        public string? PhotoUrl { get; set; }
         public bool IsActive { get; set; }
     }
 }

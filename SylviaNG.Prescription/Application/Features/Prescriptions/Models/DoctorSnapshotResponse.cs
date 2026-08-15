@@ -11,7 +11,7 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Models
         public string? Qualification { get; set; }
         public string? Department { get; set; }
         public string? LicenseNumber { get; set; }
-        public string? SignatureBase64 { get; set; }
+        public string? SignatureUrl { get; set; }
         public long? PreferredTemplateId { get; set; }
     }
 }
