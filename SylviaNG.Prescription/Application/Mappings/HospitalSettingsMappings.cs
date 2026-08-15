@@ -11,7 +11,7 @@ namespace SylviaNG.Prescription.Application.Mappings
             {
                 HospitalSettingsId = settings.HospitalSettingsId,
                 Name = settings.Name,
-                LogoBase64 = settings.LogoBase64,
+                LogoUrl = settings.LogoUrl,
                 Address = settings.Address,
                 Phone = settings.Phone,
                 EmergencyNumber = settings.EmergencyNumber,
@@ -20,7 +20,7 @@ namespace SylviaNG.Prescription.Application.Mappings
                 Slogan = settings.Slogan,
                 SloganBn = settings.SloganBn,
                 LicenseNumber = settings.LicenseNumber,
-                SealBase64 = settings.SealBase64
+                SealUrl = settings.SealUrl
             };
         }
     }

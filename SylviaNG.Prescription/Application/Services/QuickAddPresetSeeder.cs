@@ -35,11 +35,34 @@ namespace SylviaNG.Prescription.Application.Services
         // don't drift as two independently-maintained lists.
         private static readonly Dictionary<QuickAddSectionTypeEnum, (string Label, object Payload)[]> Starters = new()
         {
+            // US-069: dosageBn/frequencyBn/durationBn/instructionsBn are additive — the
+            // existing English fields are untouched so the current (English-only)
+            // medicine-list-input UI keeps working unchanged. The Bn fields sit ready for a
+            // follow-up that wires the authoring UI to pick a variant by document language;
+            // not read anywhere yet.
             [QuickAddSectionTypeEnum.Medicine] =
             [
-                ("Napa 500", new { medicine = "Napa", strength = "500mg", dosage = "1 tablet", frequency = "TDS", duration = "5 days", instructions = "After meal" }),
-                ("Seclo 20", new { medicine = "Seclo", strength = "20mg", dosage = "1 capsule", frequency = "OD", duration = "7 days", instructions = "Before breakfast" }),
-                ("Fexo 120", new { medicine = "Fexo", strength = "120mg", dosage = "1 tablet", frequency = "OD", duration = "5 days", instructions = "At night" }),
+                ("Napa 500", new {
+                    medicine = "Napa", strength = "500mg",
+                    dosage = "1 tablet", dosageBn = "১ টি ট্যাবলেট",
+                    frequency = "TDS", frequencyBn = "দিনে ৩ বার",
+                    duration = "5 days", durationBn = "৫ দিন",
+                    instructions = "After meal", instructionsBn = "খাবার পর",
+                }),
+                ("Seclo 20", new {
+                    medicine = "Seclo", strength = "20mg",
+                    dosage = "1 capsule", dosageBn = "১ টি ক্যাপসুল",
+                    frequency = "OD", frequencyBn = "দিনে ১ বার",
+                    duration = "7 days", durationBn = "৭ দিন",
+                    instructions = "Before breakfast", instructionsBn = "সকালের নাস্তার আগে",
+                }),
+                ("Fexo 120", new {
+                    medicine = "Fexo", strength = "120mg",
+                    dosage = "1 tablet", dosageBn = "১ টি ট্যাবলেট",
+                    frequency = "OD", frequencyBn = "দিনে ১ বার",
+                    duration = "5 days", durationBn = "৫ দিন",
+                    instructions = "At night", instructionsBn = "রাতে",
+                }),
             ],
             // Shape matches PrescriptionContent's DiagnosisItem{Text, Icd10}, not a plain
             // string — unlike C/C, H/O, and Investigation, Diagnosis in a real prescription

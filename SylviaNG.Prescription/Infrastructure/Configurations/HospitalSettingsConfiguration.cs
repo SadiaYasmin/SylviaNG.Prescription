@@ -30,10 +30,9 @@ namespace SylviaNG.Prescription.Infrastructure.Configurations
             builder.Property(h => h.SloganBn).HasMaxLength(300);
             builder.Property(h => h.LicenseNumber).HasMaxLength(100);
 
-            // Logo/seal images: unbounded base64 text — no HasMaxLength, see TemplateConfiguration
-            // for why (portability across SqlServer/Npgsql/Oracle).
-            builder.Property(h => h.LogoBase64);
-            builder.Property(h => h.SealBase64);
+            // US-083: relative URLs (e.g. "/uploads/hospital-logo/{guid}.png"), not base64 blobs.
+            builder.Property(h => h.LogoUrl).HasMaxLength(500);
+            builder.Property(h => h.SealUrl).HasMaxLength(500);
         }
     }
 }

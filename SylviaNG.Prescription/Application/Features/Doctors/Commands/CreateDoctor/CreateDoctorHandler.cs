@@ -14,12 +14,18 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.CreateDoct
     {
         private readonly IAuthService _authService;
         private readonly IDoctorRepository _doctorRepository;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public CreateDoctorHandler(IAuthService authService, IDoctorRepository doctorRepository, IUnitOfWork unitOfWork)
+        public CreateDoctorHandler(
+            IAuthService authService,
+            IDoctorRepository doctorRepository,
+            IFileStorageService fileStorageService,
+            IUnitOfWork unitOfWork)
         {
             _authService = authService;
             _doctorRepository = doctorRepository;
+            _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
@@ -55,7 +61,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.CreateDoct
                 ExperienceYears = request.ExperienceYears,
                 Gender = request.Gender,
                 JoiningDate = request.JoiningDate,
-                PhotoBase64 = request.PhotoBase64
+                PhotoUrl = await _fileStorageService.SaveImageAsync(request.PhotoBase64, "doctor-photos", cancellationToken)
             };
 
             await _doctorRepository.AddAsync(doctor);

@@ -3,6 +3,7 @@ using SylviaNG.Prescription.Application.Common;
 using SylviaNG.Prescription.Application.Common.Exceptions;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
 namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoctorPhoto
@@ -12,17 +13,20 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
         private readonly IUserRepository _userRepository;
         private readonly IStaffRepository _staffRepository;
         private readonly IDoctorRepository _doctorRepository;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
         public UpdateDoctorPhotoHandler(
             IUserRepository userRepository,
             IStaffRepository staffRepository,
             IDoctorRepository doctorRepository,
+            IFileStorageService fileStorageService,
             IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _staffRepository = staffRepository;
             _doctorRepository = doctorRepository;
+            _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
@@ -35,7 +39,9 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
             var user = await _userRepository.GetByIdAsync(doctor.UserId)
                 ?? throw new NotFoundException("User", doctor.UserId);
 
-            doctor.PhotoBase64 = command.Request.PhotoBase64;
+            await _fileStorageService.DeleteAsync(doctor.PhotoUrl);
+            doctor.PhotoUrl = await _fileStorageService.SaveImageAsync(
+                command.Request.PhotoBase64, "doctor-photos", cancellationToken);
 
             _doctorRepository.Update(doctor);
             await _unitOfWork.SaveChangesAsync();
@@ -49,7 +55,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
                 LicenseNumber = doctor.LicenseNumber,
                 Phone = doctor.Phone,
                 Email = user.Email,
-                PhotoBase64 = doctor.PhotoBase64
+                PhotoUrl = doctor.PhotoUrl
             };
         }
     }

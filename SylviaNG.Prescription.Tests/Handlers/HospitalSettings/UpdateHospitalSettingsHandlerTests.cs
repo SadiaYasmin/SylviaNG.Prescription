@@ -5,6 +5,7 @@ using SylviaNG.Prescription.Application.Common.Exceptions;
 using SylviaNG.Prescription.Application.Features.HospitalSettings.Commands.UpdateHospitalSettings;
 using SylviaNG.Prescription.Application.Features.HospitalSettings.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
 namespace SylviaNG.Prescription.Tests.Handlers.HospitalSettings;
@@ -12,12 +13,14 @@ namespace SylviaNG.Prescription.Tests.Handlers.HospitalSettings;
 public class UpdateHospitalSettingsHandlerTests
 {
     private readonly Mock<IHospitalSettingsRepository> _hospitalSettingsRepositoryMock = new();
+    private readonly Mock<IFileStorageService> _fileStorageServiceMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly UpdateHospitalSettingsHandler _handler;
 
     public UpdateHospitalSettingsHandlerTests()
     {
-        _handler = new UpdateHospitalSettingsHandler(_hospitalSettingsRepositoryMock.Object, _unitOfWorkMock.Object);
+        _handler = new UpdateHospitalSettingsHandler(
+            _hospitalSettingsRepositoryMock.Object, _fileStorageServiceMock.Object, _unitOfWorkMock.Object);
     }
 
     [Fact]

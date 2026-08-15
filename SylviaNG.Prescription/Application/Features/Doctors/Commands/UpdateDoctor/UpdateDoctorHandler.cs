@@ -3,6 +3,7 @@ using SylviaNG.Prescription.Application.Common.Exceptions;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Interfaces.Externals;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.Application.Mappings;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
@@ -13,17 +14,20 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
         private readonly IDoctorRepository _doctorRepository;
         private readonly IUserRepository _userRepository;
         private readonly IKeycloakAdminClient _adminClient;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
         public UpdateDoctorHandler(
             IDoctorRepository doctorRepository,
             IUserRepository userRepository,
             IKeycloakAdminClient adminClient,
+            IFileStorageService fileStorageService,
             IUnitOfWork unitOfWork)
         {
             _doctorRepository = doctorRepository;
             _userRepository = userRepository;
             _adminClient = adminClient;
+            _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
@@ -51,7 +55,15 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
             doctor.ExperienceYears = request.ExperienceYears;
             doctor.Gender = request.Gender;
             doctor.JoiningDate = request.JoiningDate;
-            doctor.PhotoBase64 = request.PhotoBase64;
+
+            // US-083: a null PhotoBase64 leaves the current photo untouched (the edit form
+            // only carries a value when the admin actually picked a new file) — an empty
+            // string is the explicit "remove photo" signal, matching the button's intent.
+            if (request.PhotoBase64 is not null)
+            {
+                await _fileStorageService.DeleteAsync(doctor.PhotoUrl);
+                doctor.PhotoUrl = await _fileStorageService.SaveImageAsync(request.PhotoBase64, "doctor-photos", cancellationToken);
+            }
 
             if (!string.IsNullOrWhiteSpace(request.Email))
                 user.Email = request.Email;

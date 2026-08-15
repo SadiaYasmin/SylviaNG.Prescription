@@ -37,7 +37,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorPr
                 LicenseNumber = doctor.LicenseNumber,
                 Phone = doctor.Phone,
                 Email = user.Email,
-                PhotoBase64 = doctor.PhotoBase64
+                PhotoUrl = doctor.PhotoUrl
             };
         }
     }

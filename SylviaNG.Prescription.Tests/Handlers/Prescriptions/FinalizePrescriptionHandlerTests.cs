@@ -63,7 +63,7 @@ public class FinalizePrescriptionHandlerTests
         UserId = 15,
         FullName = "Dr. Sabrina Khatun",
         Phone = "01700000000",
-        SignatureBase64 = "data:image/png;base64,abc",
+        SignatureUrl = "/uploads/doctor-signatures/abc.png",
         PreferredTemplateId = TemplateId
     };
 
@@ -119,10 +119,31 @@ public class FinalizePrescriptionHandlerTests
         // Arrange
         _prescriptionRepositoryMock.Setup(r => r.GetByIdAsync(PrescriptionId)).ReturnsAsync(DraftPrescription());
         var doctor = FullyEquippedDoctor();
-        if (!hasSignature) doctor.SignatureBase64 = null;
+        if (!hasSignature) doctor.SignatureUrl = null;
         if (!hasTemplate) doctor.PreferredTemplateId = null;
         _doctorRepositoryMock.Setup(r => r.GetByIdAsync(DoctorId)).ReturnsAsync(doctor);
 
+        var request = ValidRequest();
+        if (!hasDiagnosis) request.Content.Diagnoses = new List<DiagnosisItem>();
+        if (!hasMedicine) request.Content.Medicines = new List<MedicineItem>();
+
+        // Act
+        var act = () => _handler.Handle(new FinalizePrescriptionCommand("kc-doctor-10", PrescriptionId, request), default);
+
+        // Assert
+        await act.Should().ThrowAsync<BadRequestException>();
+        _prescriptionRepositoryMock.Verify(r => r.Update(It.IsAny<PrescriptionRecord>()), Times.Never);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(false, true)]  // missing diagnosis only
+    [InlineData(true, false)]  // missing medicine only
+    public async Task Handle_WhenMissingOnlyDiagnosisOrOnlyMedicine_ShouldThrowBadRequestException(bool hasDiagnosis, bool hasMedicine)
+    {
+        // Arrange: US-026 preconditions are checked individually too, not only in combination
+        // (see Handle_WhenMissingDiagnosisAndMedicine_ShouldListBothInOneException below).
+        _prescriptionRepositoryMock.Setup(r => r.GetByIdAsync(PrescriptionId)).ReturnsAsync(DraftPrescription());
         var request = ValidRequest();
         if (!hasDiagnosis) request.Content.Diagnoses = new List<DiagnosisItem>();
         if (!hasMedicine) request.Content.Medicines = new List<MedicineItem>();

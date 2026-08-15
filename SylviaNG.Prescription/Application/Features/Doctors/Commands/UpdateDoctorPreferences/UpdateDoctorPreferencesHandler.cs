@@ -53,7 +53,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
             return new DoctorPreferencesResponse
             {
                 PreferredTemplateId = doctor.PreferredTemplateId,
-                SignatureBase64 = doctor.SignatureBase64,
+                SignatureUrl = doctor.SignatureUrl,
                 PreferredLanguage = doctor.PreferredLanguage
             };
         }

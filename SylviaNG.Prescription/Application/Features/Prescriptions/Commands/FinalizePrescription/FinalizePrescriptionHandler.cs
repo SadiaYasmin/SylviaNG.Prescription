@@ -75,7 +75,7 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Commands.Fina
                 missing.Add("at least one diagnosis");
             if (content.Medicines.Count == 0)
                 missing.Add("at least one medicine");
-            if (string.IsNullOrWhiteSpace(doctor.SignatureBase64))
+            if (string.IsNullOrWhiteSpace(doctor.SignatureUrl))
                 missing.Add("your signature (set it in Prescription Preferences)");
             if (doctor.PreferredTemplateId is null)
                 missing.Add("a preferred template (set it in Prescription Preferences)");

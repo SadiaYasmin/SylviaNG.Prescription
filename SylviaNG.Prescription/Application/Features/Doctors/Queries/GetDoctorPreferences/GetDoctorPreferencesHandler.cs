@@ -29,7 +29,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorPr
             return new DoctorPreferencesResponse
             {
                 PreferredTemplateId = doctor.PreferredTemplateId,
-                SignatureBase64 = doctor.SignatureBase64,
+                SignatureUrl = doctor.SignatureUrl,
                 PreferredLanguage = doctor.PreferredLanguage
             };
         }

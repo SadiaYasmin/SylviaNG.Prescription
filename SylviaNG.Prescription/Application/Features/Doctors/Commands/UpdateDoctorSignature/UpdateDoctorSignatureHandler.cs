@@ -3,6 +3,7 @@ using SylviaNG.Prescription.Application.Common;
 using SylviaNG.Prescription.Application.Common.Exceptions;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
 namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoctorSignature
@@ -13,17 +14,20 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
         private readonly IUserRepository _userRepository;
         private readonly IStaffRepository _staffRepository;
         private readonly IDoctorRepository _doctorRepository;
+        private readonly IFileStorageService _fileStorageService;
         private readonly IUnitOfWork _unitOfWork;
 
         public UpdateDoctorSignatureHandler(
             IUserRepository userRepository,
             IStaffRepository staffRepository,
             IDoctorRepository doctorRepository,
+            IFileStorageService fileStorageService,
             IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _staffRepository = staffRepository;
             _doctorRepository = doctorRepository;
+            _fileStorageService = fileStorageService;
             _unitOfWork = unitOfWork;
         }
 
@@ -37,14 +41,16 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
             var doctor = await _doctorRepository.GetByIdAsync(caller.DoctorId!.Value)
                 ?? throw new NotFoundException("Doctor", caller.DoctorId!.Value);
 
-            doctor.SignatureBase64 = command.Request.SignatureBase64;
+            await _fileStorageService.DeleteAsync(doctor.SignatureUrl);
+            doctor.SignatureUrl = await _fileStorageService.SaveImageAsync(
+                command.Request.SignatureBase64, "doctor-signatures", cancellationToken);
             _doctorRepository.Update(doctor);
             await _unitOfWork.SaveChangesAsync();
 
             return new DoctorPreferencesResponse
             {
                 PreferredTemplateId = doctor.PreferredTemplateId,
-                SignatureBase64 = doctor.SignatureBase64,
+                SignatureUrl = doctor.SignatureUrl,
                 PreferredLanguage = doctor.PreferredLanguage
             };
         }

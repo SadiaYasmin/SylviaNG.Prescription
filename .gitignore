@@ -2,6 +2,10 @@
 **/bin/
 **/obj/
 
+# US-083: locally-uploaded images (doctor photos/signatures, hospital logo/seal) — never committed
+SylviaNG.Prescription/wwwroot/uploads/*
+!SylviaNG.Prescription/wwwroot/uploads/.gitkeep
+
 # Rider project files
 .idea/
 

@@ -5,6 +5,7 @@ using SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoctor;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Interfaces.Externals;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.Domain.Entities;
 using SylviaNG.Prescription.Domain.Enums;
 using SylviaNG.Prescription.SharedKernel.Generic;
@@ -16,6 +17,7 @@ public class UpdateDoctorHandlerTests
     private readonly Mock<IDoctorRepository> _doctorRepositoryMock = new();
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IKeycloakAdminClient> _adminClientMock = new();
+    private readonly Mock<IFileStorageService> _fileStorageServiceMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly UpdateDoctorHandler _handler;
 
@@ -25,6 +27,7 @@ public class UpdateDoctorHandlerTests
             _doctorRepositoryMock.Object,
             _userRepositoryMock.Object,
             _adminClientMock.Object,
+            _fileStorageServiceMock.Object,
             _unitOfWorkMock.Object);
     }
 

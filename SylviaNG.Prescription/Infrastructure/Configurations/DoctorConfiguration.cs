@@ -24,6 +24,10 @@ namespace SylviaNG.Prescription.Infrastructure.Configurations
             builder.Property(d => d.LicenseNumber).HasMaxLength(50);
             builder.Property(d => d.Specialization).HasMaxLength(200);
 
+            // US-083: relative URLs (e.g. "/uploads/doctor-photos/{guid}.png"), not base64 blobs.
+            builder.Property(d => d.PhotoUrl).HasMaxLength(500);
+            builder.Property(d => d.SignatureUrl).HasMaxLength(500);
+
             builder.Property(d => d.Gender)
                 .HasConversion<string>()
                 .HasMaxLength(10);

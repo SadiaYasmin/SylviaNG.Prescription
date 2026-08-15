@@ -15,7 +15,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
         public string? LicenseNumber { get; set; }
         public string Phone { get; set; } = string.Empty;
         public string? Email { get; set; }
-        public string? PhotoBase64 { get; set; }
+        public string? PhotoUrl { get; set; }
     }
 
     public class UpdateDoctorProfileRequest

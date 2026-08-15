@@ -91,6 +91,20 @@ public class SaveDraftPrescriptionHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldNeverMarkTheConsultationCompleted()
+    {
+        // US-017 invariant, other direction from FinalizePrescriptionHandlerTests'
+        // "finalize completes the consultation" coverage: saving a draft must never
+        // transition the consultation to Completed — only finalizing a prescription may.
+        _prescriptionRepositoryMock.Setup(r => r.GetByIdAsync(PrescriptionId)).ReturnsAsync(DraftPrescription());
+        var request = new SaveDraftPrescriptionRequest { Language = TemplateLanguageEnum.En, Content = new PrescriptionContent() };
+
+        await _handler.Handle(new SaveDraftPrescriptionCommand("kc-doctor-10", PrescriptionId, request), default);
+
+        _consultationRepositoryMock.Verify(r => r.Update(It.Is<Consultation>(c => c.Status != ConsultationStatusEnum.Completed)), Times.Once);
+    }
+
+    [Fact]
     public async Task Handle_WithDuplicateMedicines_ShouldThrowBadRequestExceptionAndNotSave()
     {
         // Arrange
