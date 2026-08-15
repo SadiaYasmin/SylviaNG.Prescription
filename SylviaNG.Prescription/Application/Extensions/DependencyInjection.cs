@@ -32,6 +32,7 @@ namespace SylviaNG.Prescription.Application.Extensions
             services.AddScoped<AdminAccountSeeder>();
             services.AddScoped<TemplateEngineSeeder>();
             services.AddScoped<MedicineCatalogSeeder>();
+            services.AddScoped<QuickAddPresetSeeder>();
 
             // Provide access to HttpContext for request metadata enrichment
             services.AddHttpContextAccessor();

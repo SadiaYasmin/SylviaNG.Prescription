@@ -17,4 +17,14 @@ namespace SylviaNG.Prescription.Application.Features.QuickAdd.Models
         public string Label { get; set; } = string.Empty;
         public string PayloadJson { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// SectionType is deliberately not editable here — changing a preset's section is
+    /// modeled as delete+recreate, so it never ends up orphaned in the wrong section's list.
+    /// </summary>
+    public class UpdateQuickAddPresetRequest
+    {
+        public string Label { get; set; } = string.Empty;
+        public string PayloadJson { get; set; } = string.Empty;
+    }
 }

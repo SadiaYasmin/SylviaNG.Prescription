@@ -17,7 +17,7 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions
             var seen = new HashSet<string>();
             foreach (var medicine in medicines)
             {
-                var key = Normalize(medicine.Medicine) + "|" + Normalize(medicine.Strength);
+                var key = NormalizeKey(medicine.Medicine, medicine.Strength);
                 if (!seen.Add(key))
                 {
                     throw new BadRequestException(
@@ -25,6 +25,14 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions
                 }
             }
         }
+
+        /// <summary>
+        /// The trim/lowercase name+strength key used both here and by Epic F's catalog CRUD
+        /// (duplicate brand+strength check) and prescribing-analytics aggregation — one
+        /// normalization function shared by every feature that needs to match a free-typed
+        /// prescription line back to a catalog entry.
+        /// </summary>
+        public static string NormalizeKey(string? name, string? strength) => Normalize(name) + "|" + Normalize(strength);
 
         private static string Normalize(string? value) => (value ?? string.Empty).Trim().ToLowerInvariant();
     }

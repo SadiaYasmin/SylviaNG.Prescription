@@ -14,5 +14,18 @@ namespace SylviaNG.Prescription.Application.Mappings
             DosageForm = medicine.DosageForm,
             Category = medicine.Category
         };
+
+        public static MedicineCatalogResponse ToCatalogResponse(this Medicine medicine, int totalPrescribed) => new()
+        {
+            MedicineId = medicine.MedicineId,
+            BrandName = medicine.BrandName,
+            GenericName = medicine.GenericName,
+            Strength = medicine.Strength,
+            Manufacturer = medicine.Manufacturer,
+            DosageForm = medicine.DosageForm,
+            Category = medicine.Category,
+            Active = medicine.Active,
+            TotalPrescribed = totalPrescribed
+        };
     }
 }
