@@ -16,7 +16,10 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Models
         public string? Strength { get; set; }
         public string? Manufacturer { get; set; }
         public string? DosageForm { get; set; }
+        public string? Route { get; set; }
         public string? Category { get; set; }
+        public decimal? UnitPrice { get; set; }
+        public bool DgdaRegistered { get; set; }
         public bool Active { get; set; }
         public int TotalPrescribed { get; set; }
     }

@@ -4,5 +4,6 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Models
     {
         public long DoctorId { get; set; }
         public string FullName { get; set; } = string.Empty;
+        public string? Department { get; set; }
     }
 }

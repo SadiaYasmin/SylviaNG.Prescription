@@ -1,10 +1,9 @@
 using MediatR;
-using SylviaNG.Prescription.Application.Features.Auth.Models;
 using SylviaNG.Prescription.Application.Interfaces.Services;
 
 namespace SylviaNG.Prescription.Application.Features.Auth.Commands.ResetPassword
 {
-    public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, ResetPasswordResponse>
+    public class ResetPasswordHandler : IRequestHandler<ResetPasswordCommand, Unit>
     {
         private readonly IAuthService _authService;
 
@@ -13,9 +12,10 @@ namespace SylviaNG.Prescription.Application.Features.Auth.Commands.ResetPassword
             _authService = authService;
         }
 
-        public async Task<ResetPasswordResponse> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(ResetPasswordCommand command, CancellationToken cancellationToken)
         {
-            return await _authService.ResetPasswordAsync(command.UserId);
+            await _authService.ResetPasswordAsync(command.UserId);
+            return Unit.Value;
         }
     }
 }

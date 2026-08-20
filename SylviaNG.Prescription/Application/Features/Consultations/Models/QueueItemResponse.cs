@@ -18,5 +18,9 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Models
         public string PatientName { get; set; } = string.Empty;
         public long DoctorId { get; set; }
         public string DoctorName { get; set; } = string.Empty;
+        // True once the linked prescription has ever been explicitly "Save as Draft"-ed
+        // (PrescriptionRecord.SavedAt set) — independent of Status, which flips back to
+        // InConsultation the moment the draft is reopened (see StartOrResumePrescriptionHandler).
+        public bool HasSavedDraft { get; set; }
     }
 }

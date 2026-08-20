@@ -32,7 +32,8 @@ namespace SylviaNG.Prescription.Application.Mappings
             string registeredByName,
             long? todayConsultationId,
             ConsultationStatusEnum? todayConsultationStatus,
-            long? todayPrescriptionId)
+            long? todayPrescriptionId,
+            bool todayHasSavedDraft = false)
         {
             return new DoctorPatientQueueItemResponse
             {
@@ -52,7 +53,8 @@ namespace SylviaNG.Prescription.Application.Mappings
                 RegisteredAt = patient.RegisteredAt,
                 TodayConsultationId = todayConsultationId,
                 TodayConsultationStatus = todayConsultationStatus,
-                TodayPrescriptionId = todayPrescriptionId
+                TodayPrescriptionId = todayPrescriptionId,
+                TodayHasSavedDraft = todayHasSavedDraft
             };
         }
 

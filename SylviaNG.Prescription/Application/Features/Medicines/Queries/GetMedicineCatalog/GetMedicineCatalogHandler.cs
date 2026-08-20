@@ -9,7 +9,7 @@ using SylviaNG.Prescription.Domain.Enums;
 
 namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedicineCatalog
 {
-    public class GetMedicineCatalogHandler : IRequestHandler<GetMedicineCatalogQuery, List<MedicineCatalogResponse>>
+    public class GetMedicineCatalogHandler : IRequestHandler<GetMedicineCatalogQuery, MedicineCatalogListResponse>
     {
         private readonly IMedicineRepository _medicineRepository;
         private readonly IPrescriptionRepository _prescriptionRepository;
@@ -31,7 +31,7 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
             _doctorRepository = doctorRepository;
         }
 
-        public async Task<List<MedicineCatalogResponse>> Handle(GetMedicineCatalogQuery query, CancellationToken cancellationToken)
+        public async Task<MedicineCatalogListResponse> Handle(GetMedicineCatalogQuery query, CancellationToken cancellationToken)
         {
             var caller = await CallerContextResolver.ResolveCallerAsync(
                 query.KeycloakId, _userRepository, _staffRepository, _doctorRepository);
@@ -69,7 +69,7 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
                 }
             }
 
-            return catalog
+            var ranked = catalog
                 .Select(m =>
                 {
                     var key = MedicineDuplicateGuard.NormalizeKey(m.BrandName, m.Strength);
@@ -77,6 +77,14 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
                 })
                 .OrderByDescending(m => m.TotalPrescribed)
                 .ToList();
+
+            return new MedicineCatalogListResponse
+            {
+                Medicines = ranked.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList(),
+                TotalCount = ranked.Count,
+                PageNumber = query.Page,
+                PageSize = query.PageSize,
+            };
         }
     }
 }

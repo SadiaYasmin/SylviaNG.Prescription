@@ -40,9 +40,12 @@ namespace SylviaNG.Prescription.Application.Features.QuickAdd.Queries.GetQuickAd
             // section — no-ops after the first call (see QuickAddPresetSeeder).
             await _seeder.SeedIfNeededAsync(doctorId, query.SectionType, cancellationToken);
 
+            // Newest-first by QuickAddPresetId, not Audit.CreatedAt — CreatedAt is never actually
+            // populated anywhere in this codebase (no SaveChanges interceptor sets it), so it's
+            // always null; PK-descending is the same reliable proxy every other list here uses.
             var presets = await _quickAddPresetRepository.Query()
                 .Where(p => p.DoctorId == doctorId && p.SectionType == query.SectionType)
-                .OrderBy(p => p.Label)
+                .OrderByDescending(p => p.QuickAddPresetId)
                 .ToListAsync(cancellationToken);
 
             return presets.Select(p => p.ToResponse()).ToList();

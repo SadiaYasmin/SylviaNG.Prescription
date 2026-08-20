@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SylviaNG.Prescription.Application.Features.Medicines.Commands.CreateMedicine;
 using SylviaNG.Prescription.Application.Features.Medicines.Commands.DeactivateMedicine;
+using SylviaNG.Prescription.Application.Features.Medicines.Commands.ImportMedicines;
 using SylviaNG.Prescription.Application.Features.Medicines.Commands.UpdateMedicine;
 using SylviaNG.Prescription.Application.Features.Medicines.Models;
 using SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedicineById;
@@ -31,18 +32,22 @@ namespace SylviaNG.Prescription.Controllers
 
         [Authorize(Roles = "Admin,Doctor,Staff")]
         [HttpGet]
-        public async Task<ActionResult<List<MedicineSummaryResponse>>> Search([FromQuery] string? search)
+        public async Task<ActionResult<MedicineSearchListResponse>> Search(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] bool includeUnregistered = false)
         {
-            var result = await _mediator.Send(new SearchMedicinesQuery(search));
+            var result = await _mediator.Send(new SearchMedicinesQuery(search, page, pageSize, includeUnregistered));
             return Ok(result);
         }
 
-        [Authorize(Roles = "Admin,Doctor")]
+        [Authorize(Roles = "Admin,Doctor,Staff")]
         [HttpGet("catalog")]
-        public async Task<ActionResult<List<MedicineCatalogResponse>>> GetCatalog([FromQuery] string? search)
+        public async Task<ActionResult<MedicineCatalogListResponse>> GetCatalog([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 25)
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId));
+            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId, page, pageSize));
             return Ok(result);
         }
 
@@ -76,6 +81,22 @@ namespace SylviaNG.Prescription.Controllers
         {
             await _mediator.Send(new DeactivateMedicineCommand(id));
             return Ok();
+        }
+
+        /// <summary>medicine-feature-brief.md §5: idempotent CSV upsert, admin-only.</summary>
+        [Authorize(Roles = "Admin")]
+        [HttpPost("import")]
+        [RequestSizeLimit(20_000_000)]
+        public async Task<ActionResult<MedicineImportResultResponse>> Import(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            await using var stream = file.OpenReadStream();
+            var result = await _mediator.Send(new ImportMedicinesCommand(stream));
+            return Ok(result);
         }
     }
 }

@@ -3,7 +3,7 @@ namespace SylviaNG.Prescription.Application.Common.Exceptions
     public class InvalidCredentialsException : Exception
     {
         public InvalidCredentialsException()
-            : base("Invalid username or password.")
+            : base("Invalid email or password.")
         {
         }
     }

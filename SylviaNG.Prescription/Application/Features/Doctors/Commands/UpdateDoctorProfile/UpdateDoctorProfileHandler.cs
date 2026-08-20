@@ -11,8 +11,9 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
     /// A doctor editing their own profile (US-061) — deliberately never accepts a target
     /// doctor id from the request; the caller is always resolved from the JWT, so this
     /// self-service action can never be used to edit another doctor's record. Mirrors
-    /// UpdateDoctorHandler's field-write + duplicate-license check, but omits the
-    /// IsActive/Keycloak-enable block entirely (an Admin-only concern).
+    /// UpdateDoctorHandler's field-write, but omits the IsActive/Keycloak-enable block
+    /// entirely (an Admin-only concern) and never writes LicenseNumber — that's Admin-only
+    /// too (edited via UpdateDoctorHandler, which owns the duplicate-license check).
     /// </summary>
     public class UpdateDoctorProfileHandler : IRequestHandler<UpdateDoctorProfileCommand, DoctorProfileResponse>
     {
@@ -44,17 +45,10 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoct
 
             var request = command.Request;
 
-            if (!string.IsNullOrWhiteSpace(request.LicenseNumber) &&
-                await _doctorRepository.ExistsByLicenseNumberAsync(request.LicenseNumber, doctor.DoctorId))
-            {
-                throw new DuplicateException("Doctor", "LicenseNumber", request.LicenseNumber);
-            }
-
             doctor.FullName = request.FullName;
             doctor.Phone = request.Phone;
             doctor.Qualification = request.Qualification;
             doctor.Department = request.Department;
-            doctor.LicenseNumber = request.LicenseNumber;
 
             if (!string.IsNullOrWhiteSpace(request.Email))
                 user.Email = request.Email;

@@ -184,12 +184,42 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Commands.Star
             {
                 prescription = await CreateBlankPrescriptionAsync(consultation, doctorId, cancellationToken);
             }
+            else if (prescription.SavedAt is null && prescription.Status != PrescriptionStatusEnum.Finalized)
+            {
+                // Never explicitly "Save as Draft"-ed — the TemplateId/Language snapshot (US-064)
+                // isn't a real commitment yet, so keep following the doctor's current preferences on
+                // every resume instead of sticking to whatever was picked at the first keystroke.
+                // This is what makes the language "sticky": once a doctor switches to বাংলা (which
+                // persists as Doctor.PreferredLanguage), reopening an untouched draft — and every new
+                // prescription — shows Bangla, until they switch back to English.
+                var currentDoctor = await _doctorRepository.GetByIdAsync(doctorId)
+                    ?? throw new NotFoundException("Doctor", doctorId);
+                var currentTemplate = await ResolvePreferredTemplateAsync(doctorId);
+                var preferredLanguage = currentDoctor.PreferredLanguage ?? TemplateLanguageEnum.En;
+
+                var changed = false;
+                if (currentTemplate.TemplateId != prescription.TemplateId)
+                {
+                    prescription.TemplateId = currentTemplate.TemplateId;
+                    changed = true;
+                }
+                if (preferredLanguage != prescription.Language)
+                {
+                    prescription.Language = preferredLanguage;
+                    changed = true;
+                }
+                if (changed)
+                {
+                    _prescriptionRepository.Update(prescription);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
 
             var document = await BuildDocumentAsync(prescription, cancellationToken);
             return new StartOrResumePrescriptionResponse { Document = document };
         }
 
-        private async Task<PrescriptionRecord> CreateBlankPrescriptionAsync(Domain.Entities.Consultation consultation, long doctorId, CancellationToken cancellationToken)
+        private async Task<PrescriptionTemplate> ResolvePreferredTemplateAsync(long doctorId)
         {
             var doctor = await _doctorRepository.GetByIdAsync(doctorId)
                 ?? throw new NotFoundException("Doctor", doctorId);
@@ -203,6 +233,15 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Commands.Star
                     .FirstOrDefault(t => t.IsSystemDefault && t.Enabled)
                     ?? throw new BadRequestException("No enabled prescription template is available.");
             }
+
+            return template;
+        }
+
+        private async Task<PrescriptionRecord> CreateBlankPrescriptionAsync(Domain.Entities.Consultation consultation, long doctorId, CancellationToken cancellationToken)
+        {
+            var template = await ResolvePreferredTemplateAsync(doctorId);
+            var doctor = await _doctorRepository.GetByIdAsync(doctorId)
+                ?? throw new NotFoundException("Doctor", doctorId);
 
             var patient = await _patientRepository.GetByIdAsync(consultation.PatientId)
                 ?? throw new NotFoundException("Patient", consultation.PatientId);
@@ -219,7 +258,9 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Commands.Star
                 DoctorId = doctorId,
                 TemplateId = template.TemplateId,
                 Language = doctor.PreferredLanguage ?? TemplateLanguageEnum.En,
-                Status = PrescriptionStatusEnum.Draft
+                // Starts as InProgress (auto-saved but hidden from the Draft list) — it only
+                // becomes Draft when the doctor leaves it or explicitly saves as draft.
+                Status = PrescriptionStatusEnum.InProgress
             };
 
             // US-009: a brand-new prescription (never a resumed draft) preloads the patient's

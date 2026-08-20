@@ -19,17 +19,20 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecut
         private readonly IPrescriptionRepository _prescriptionRepository;
         private readonly IMedicineRepository _medicineRepository;
         private readonly IDoctorRepository _doctorRepository;
+        private readonly IStaffRepository _staffRepository;
 
         public GetExecutiveSummaryHandler(
             IPatientRepository patientRepository,
             IPrescriptionRepository prescriptionRepository,
             IMedicineRepository medicineRepository,
-            IDoctorRepository doctorRepository)
+            IDoctorRepository doctorRepository,
+            IStaffRepository staffRepository)
         {
             _patientRepository = patientRepository;
             _prescriptionRepository = prescriptionRepository;
             _medicineRepository = medicineRepository;
             _doctorRepository = doctorRepository;
+            _staffRepository = staffRepository;
         }
 
         public async Task<ExecutiveSummaryResponse> Handle(GetExecutiveSummaryQuery query, CancellationToken cancellationToken)
@@ -42,6 +45,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecut
             var patients = await _patientRepository.Query().ToListAsync(cancellationToken);
             var doctors = await _doctorRepository.Query().ToListAsync(cancellationToken);
             var totalMedicines = await _medicineRepository.Query().CountAsync(cancellationToken);
+            var totalStaff = await _staffRepository.Query().CountAsync(cancellationToken);
             var finalized = await _prescriptionRepository.Query()
                 .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
                 .ToListAsync(cancellationToken);
@@ -80,6 +84,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecut
                 TotalPrescriptions = finalized.Count,
                 TotalMedicines = totalMedicines,
                 TotalDoctors = doctors.Count,
+                TotalStaff = totalStaff,
                 PrescriptionTrend = new MonthOverMonthMetric
                 {
                     Current = rxCurrent,

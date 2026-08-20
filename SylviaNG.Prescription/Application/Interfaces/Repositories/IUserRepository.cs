@@ -8,5 +8,6 @@ namespace SylviaNG.Prescription.Application.Interfaces.Repositories
         Task<User?> GetByUsernameAsync(string username);
         Task<bool> ExistsByUsernameAsync(string username);
         Task<User?> GetByKeycloakIdAsync(string keycloakId);
+        Task<User?> GetByEmailAsync(string email);
     }
 }

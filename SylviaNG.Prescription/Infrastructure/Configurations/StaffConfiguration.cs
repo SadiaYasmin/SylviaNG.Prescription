@@ -19,8 +19,6 @@ namespace SylviaNG.Prescription.Infrastructure.Configurations
                 .IsRequired()
                 .HasMaxLength(11);
 
-            builder.Property(s => s.Department).HasMaxLength(100);
-
             builder.HasIndex(s => s.UserId).IsUnique();
 
             builder.HasOne(s => s.User)

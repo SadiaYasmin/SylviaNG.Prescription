@@ -54,8 +54,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.CreateStaff
             {
                 UserId = account.UserId,
                 FullName = request.FullName,
-                Phone = request.Phone,
-                Department = request.Department
+                Phone = request.Phone
             };
 
             await _staffRepository.AddAsync(staff);
@@ -71,8 +70,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.CreateStaff
             {
                 StaffId = staff.StaffId,
                 UserId = account.UserId,
-                Username = account.Username,
-                TemporaryPassword = account.TemporaryPassword
+                Username = account.Username
             };
         }
 

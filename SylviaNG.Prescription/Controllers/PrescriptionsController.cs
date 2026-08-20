@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SylviaNG.Prescription.Application.Features.Prescriptions.Commands.AutoSavePrescription;
 using SylviaNG.Prescription.Application.Features.Prescriptions.Commands.FinalizePrescription;
 using SylviaNG.Prescription.Application.Features.Prescriptions.Commands.SaveDraftPrescription;
 using SylviaNG.Prescription.Application.Features.Prescriptions.Commands.StartOrResumePrescription;
@@ -47,6 +48,15 @@ namespace SylviaNG.Prescription.Controllers
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var result = await _mediator.Send(new SaveDraftPrescriptionCommand(keycloakId, id, request));
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Doctor")]
+        [HttpPatch("{id}/autosave")]
+        public async Task<ActionResult<AutoSavePrescriptionResponse>> AutoSave(long id, [FromBody] SaveDraftPrescriptionRequest request)
+        {
+            var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _mediator.Send(new AutoSavePrescriptionCommand(keycloakId, id, request));
             return Ok(result);
         }
 

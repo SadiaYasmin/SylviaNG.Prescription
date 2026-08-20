@@ -40,7 +40,10 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Commands.CreateMe
                 Strength = request.Strength,
                 Manufacturer = request.Manufacturer,
                 DosageForm = request.DosageForm,
+                Route = request.Route,
                 Category = request.Category,
+                UnitPrice = request.UnitPrice,
+                DgdaRegistered = request.DgdaRegistered,
                 Active = true
             };
 

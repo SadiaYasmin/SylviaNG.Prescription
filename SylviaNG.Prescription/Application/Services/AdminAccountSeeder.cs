@@ -57,7 +57,12 @@ namespace SylviaNG.Prescription.Application.Services
             // Keycloak's declarative User Profile requires email on this realm (same class of
             // "account not fully set up" trap as missing firstName/lastName) — always send one.
             var email = $"{username}@prescriptionms.local";
-            var created = await _adminClient.CreateUserAsync(username, email, firstName: username, lastName: "Admin", password, UserRoleEnum.Admin.ToString());
+            var created = await _adminClient.CreateUserAsync(username, email, firstName: username, lastName: "Admin", UserRoleEnum.Admin.ToString());
+
+            // Unlike Doctor/Staff accounts (invite-email, no password ever issued by this
+            // backend), this seeded admin must be usable immediately on a fresh environment
+            // with no email interaction — set the configured password directly.
+            await _adminClient.SetTemporaryPasswordAsync(created.KeycloakId, password);
 
             var user = new User
             {

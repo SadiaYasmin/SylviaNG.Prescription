@@ -23,7 +23,10 @@ namespace SylviaNG.Prescription.Application.Mappings
             Strength = medicine.Strength,
             Manufacturer = medicine.Manufacturer,
             DosageForm = medicine.DosageForm,
+            Route = medicine.Route,
             Category = medicine.Category,
+            UnitPrice = medicine.UnitPrice,
+            DgdaRegistered = medicine.DgdaRegistered,
             Active = medicine.Active,
             TotalPrescribed = totalPrescribed
         };

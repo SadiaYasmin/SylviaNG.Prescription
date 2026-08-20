@@ -31,7 +31,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffDeta
             var assignedDoctors = await _unitOfWork.Context.StaffDoctors
                 .Where(sd => sd.StaffId == staff.StaffId)
                 .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId,
-                    (sd, d) => new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName })
+                    (sd, d) => new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName, Department = d.Department })
                 .ToListAsync(cancellationToken);
 
             return new StaffDetailsResponse
