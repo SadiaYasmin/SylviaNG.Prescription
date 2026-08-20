@@ -32,7 +32,7 @@ namespace SylviaNG.Prescription.Application.Mappings
             };
         }
 
-        public static QueueItemResponse ToQueueItemResponse(this Consultation consultation, string patientName, string doctorName)
+        public static QueueItemResponse ToQueueItemResponse(this Consultation consultation, string patientName, string doctorName, bool hasSavedDraft = false)
         {
             return new QueueItemResponse
             {
@@ -44,7 +44,8 @@ namespace SylviaNG.Prescription.Application.Mappings
                 PatientId = consultation.PatientId,
                 PatientName = patientName,
                 DoctorId = consultation.DoctorId,
-                DoctorName = doctorName
+                DoctorName = doctorName,
+                HasSavedDraft = hasSavedDraft
             };
         }
 

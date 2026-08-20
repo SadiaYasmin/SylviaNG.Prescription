@@ -15,7 +15,12 @@ namespace SylviaNG.Prescription.Application.Mappings
                 Username = user.Username,
                 Email = user.Email,
                 Phone = staff.Phone,
-                Department = staff.Department,
+                Departments = assignedDoctors
+                    .Where(d => !string.IsNullOrWhiteSpace(d.Department))
+                    .Select(d => d.Department!)
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToList(),
                 IsActive = user.IsActive,
                 AssignedDoctors = assignedDoctors
             };

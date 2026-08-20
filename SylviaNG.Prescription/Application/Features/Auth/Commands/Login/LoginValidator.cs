@@ -7,7 +7,7 @@ namespace SylviaNG.Prescription.Application.Features.Auth.Commands.Login
         public LoginValidator()
         {
             RuleFor(x => x.Request.Username)
-                .NotEmpty().WithMessage("Username is required.");
+                .NotEmpty().WithMessage("Email is required.");
 
             RuleFor(x => x.Request.Password)
                 .NotEmpty().WithMessage("Password is required.");

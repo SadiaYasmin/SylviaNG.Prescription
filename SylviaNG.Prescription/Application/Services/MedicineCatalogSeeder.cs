@@ -65,6 +65,9 @@ namespace SylviaNG.Prescription.Application.Services
                     Strength = strength,
                     DosageForm = form,
                     Category = category,
+                    // Real, currently-marketed Bangladesh drugs — registered so the default
+                    // DGDA-only search filter finds them without an admin having to flip it.
+                    DgdaRegistered = true,
                     Active = true
                 });
             }

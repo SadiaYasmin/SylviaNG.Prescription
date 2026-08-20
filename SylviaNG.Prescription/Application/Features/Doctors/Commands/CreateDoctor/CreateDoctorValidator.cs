@@ -16,8 +16,8 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.CreateDoct
                 .MaximumLength(200).WithMessage("Full name must not exceed 200 characters.");
 
             RuleFor(x => x.Request.Email)
-                .EmailAddress().WithMessage("Email must be a valid email address.")
-                .When(x => !string.IsNullOrWhiteSpace(x.Request.Email));
+                .NotEmpty().WithMessage("Email is required — the account invite is sent there.")
+                .EmailAddress().WithMessage("Email must be a valid email address.");
 
             RuleFor(x => x.Request.Phone)
                 .NotEmpty().WithMessage("Phone is required.")

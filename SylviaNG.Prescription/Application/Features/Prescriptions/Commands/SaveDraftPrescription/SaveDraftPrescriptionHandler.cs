@@ -66,6 +66,10 @@ namespace SylviaNG.Prescription.Application.Features.Prescriptions.Commands.Save
 
             prescription.Language = command.Request.Language;
             prescription.SetContent(content);
+            // Promote InProgress -> Draft: this endpoint is hit both by an explicit "Save as
+            // Draft" and by the auto-park when the doctor leaves an unfinished prescription.
+            // (A reopened Draft is already Draft; a Finalized one was rejected above.)
+            prescription.Status = PrescriptionStatusEnum.Draft;
             prescription.SavedAt = DateTime.UtcNow;
             _prescriptionRepository.Update(prescription);
 

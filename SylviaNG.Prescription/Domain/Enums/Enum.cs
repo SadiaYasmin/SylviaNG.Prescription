@@ -55,15 +55,24 @@ public enum ConsultationStatusEnum
 }
 
 /// <summary>
-/// A prescription's lifecycle state (Epic D). Deliberately only two members — a
-/// brand-new/unsaved prescription is represented client-side before it's ever
-/// persisted; the row is created as <c>Draft</c> the moment authoring starts server-side
-/// (see <c>StartOrResumePrescriptionHandler</c>), so there is no third "new" status here.
+/// A prescription's lifecycle state (Epic D).
+/// <list type="bullet">
+/// <item><c>InProgress</c> — actively being authored. The row is created in this state the
+/// moment authoring starts and is continuously auto-saved for data protection, but is
+/// deliberately kept OUT of the Draft Prescriptions list. It becomes <c>Draft</c> only when
+/// the doctor leaves the unfinished prescription or explicitly saves it as a draft.</item>
+/// <item><c>Draft</c> — parked/saved and shown in the Draft Prescriptions list.</item>
+/// <item><c>Finalized</c> — explicitly finalized; permanently read-only.</item>
+/// </list>
+/// <c>InProgress</c> is appended last (value 2) on purpose — inserting it ahead of the
+/// existing members would renumber <c>Draft</c>/<c>Finalized</c> and mis-map already-stored
+/// integer status values.
 /// </summary>
 public enum PrescriptionStatusEnum
 {
     Draft,
-    Finalized
+    Finalized,
+    InProgress
 }
 
 /// <summary>

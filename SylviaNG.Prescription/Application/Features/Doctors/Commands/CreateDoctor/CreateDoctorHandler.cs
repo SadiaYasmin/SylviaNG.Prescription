@@ -71,8 +71,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Commands.CreateDoct
             {
                 DoctorId = doctor.DoctorId,
                 UserId = account.UserId,
-                Username = account.Username,
-                TemporaryPassword = account.TemporaryPassword
+                Username = account.Username
             };
         }
 

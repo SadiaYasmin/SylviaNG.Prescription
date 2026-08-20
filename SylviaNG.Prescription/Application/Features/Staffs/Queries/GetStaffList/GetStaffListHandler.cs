@@ -31,17 +31,28 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffList
                 join u in _userRepository.Query() on s.UserId equals u.UserId
                 select new { s, u };
 
+            // Staff has no own Department column (a staff member can support doctors from more
+            // than one department — see Staff.cs) — both the search box and the Department
+            // filter match against assigned doctors' Department instead, via a StaffId subquery.
+            var staffDepartments = _unitOfWork.Context.StaffDoctors
+                .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId, (sd, d) => new { sd.StaffId, d.Department })
+                .Where(x => x.Department != null);
+
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = request.SearchTerm.Trim().ToLower();
+                var staffIdsByDeptTerm = staffDepartments.Where(x => x.Department!.ToLower().Contains(term)).Select(x => x.StaffId);
                 joined = joined.Where(x =>
                     x.s.FullName.ToLower().Contains(term) ||
                     x.u.Username.ToLower().Contains(term) ||
-                    (x.s.Department != null && x.s.Department.ToLower().Contains(term)));
+                    staffIdsByDeptTerm.Contains(x.s.StaffId));
             }
 
             if (!string.IsNullOrWhiteSpace(request.Department))
-                joined = joined.Where(x => x.s.Department == request.Department);
+            {
+                var staffIdsInDept = staffDepartments.Where(x => x.Department == request.Department).Select(x => x.StaffId);
+                joined = joined.Where(x => staffIdsInDept.Contains(x.s.StaffId));
+            }
 
             if (request.IsActive.HasValue)
                 joined = joined.Where(x => x.u.IsActive == request.IsActive.Value);
@@ -59,7 +70,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffList
             var assignments = await _unitOfWork.Context.StaffDoctors
                 .Where(sd => staffIds.Contains(sd.StaffId))
                 .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId,
-                    (sd, d) => new { sd.StaffId, Doctor = new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName } })
+                    (sd, d) => new { sd.StaffId, Doctor = new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName, Department = d.Department } })
                 .ToListAsync(cancellationToken);
 
             var assignedDoctorsByStaffId = assignments.ToLookup(x => x.StaffId, x => x.Doctor);

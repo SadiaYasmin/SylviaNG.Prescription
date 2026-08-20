@@ -24,5 +24,10 @@ namespace SylviaNG.Prescription.Infrastructure.Repositories
         {
             return await _dbSet.FirstOrDefaultAsync(u => u.KeycloakId == keycloakId);
         }
+
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _dbSet.FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == email.ToLower());
+        }
     }
 }

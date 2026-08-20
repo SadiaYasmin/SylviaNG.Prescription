@@ -42,7 +42,10 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Commands.UpdateMe
             medicine.Strength = request.Strength;
             medicine.Manufacturer = request.Manufacturer;
             medicine.DosageForm = request.DosageForm;
+            medicine.Route = request.Route;
             medicine.Category = request.Category;
+            medicine.UnitPrice = request.UnitPrice;
+            medicine.DgdaRegistered = request.DgdaRegistered;
 
             _medicineRepository.Update(medicine);
             await _unitOfWork.SaveChangesAsync();

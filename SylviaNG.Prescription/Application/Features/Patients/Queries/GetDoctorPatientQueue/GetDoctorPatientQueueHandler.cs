@@ -56,12 +56,21 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetDoctorP
             var scopedPatients = await PatientVisibilityScope.ApplyAsync(
                 _patientRepository.Query(), _unitOfWork.Context, caller, cancellationToken);
 
-            var todaysConsultations = _consultationRepository.Query()
-                .Where(c => c.DoctorId == doctorId && c.VisitDate == today);
+            // Today's consultations, plus any of the doctor's still-open (non-Completed)
+            // consultations regardless of VisitDate — an unfinished draft from a prior day
+            // must keep surfacing as "Continue Draft" here rather than silently vanishing
+            // and letting the doctor accidentally start a duplicate consultation for the
+            // same patient.
+            var relevantConsultations = _consultationRepository.Query()
+                .Where(c => c.DoctorId == doctorId &&
+                    (c.VisitDate == today ||
+                     c.Status == ConsultationStatusEnum.Waiting ||
+                     c.Status == ConsultationStatusEnum.InConsultation ||
+                     c.Status == ConsultationStatusEnum.Draft));
 
             var joined =
                 from p in scopedPatients
-                join c in todaysConsultations on p.PatientId equals c.PatientId into consultGroup
+                join c in relevantConsultations on p.PatientId equals c.PatientId into consultGroup
                 from c in consultGroup.DefaultIfEmpty()
                 select new { p, c };
 
@@ -69,7 +78,7 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetDoctorP
             {
                 case PatientQueueFilterEnum.TodayQueue:
                     joined = joined.Where(x =>
-                        x.c != null && (x.c.Status == ConsultationStatusEnum.Waiting || x.c.Status == ConsultationStatusEnum.InConsultation));
+                        x.c != null && (x.c.Status == ConsultationStatusEnum.Waiting || x.c.Status == ConsultationStatusEnum.InConsultation || x.c.Status == ConsultationStatusEnum.Draft));
                     break;
 
                 case PatientQueueFilterEnum.NotConsultedToday:
@@ -117,6 +126,18 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetDoctorP
                     .ToDictionaryAsync(pr => pr.ConsultationId, pr => pr.PrescriptionId, cancellationToken)
                 : new Dictionary<long, long>();
 
+            // True once the linked prescription has ever been explicitly "Save as Draft"-ed —
+            // independent of Status, which flips back to InConsultation the moment a saved
+            // draft is reopened (see StartOrResumePrescriptionHandler).
+            var relevantConsultationIds = ordered.Where(x => x.c != null).Select(x => x.c!.ConsultationId).ToList();
+            var savedConsultationIds = relevantConsultationIds.Count > 0
+                ? (await _prescriptionRepository.Query()
+                    .Where(pr => relevantConsultationIds.Contains(pr.ConsultationId) && pr.SavedAt != null)
+                    .Select(pr => pr.ConsultationId)
+                    .ToListAsync(cancellationToken))
+                    .ToHashSet()
+                : new HashSet<long>();
+
             var staffIds = ordered.Select(x => x.p.RegisteredByStaffId).Distinct().ToList();
             var staffNamesById = await _unitOfWork.Context.Staff
                 .Where(s => staffIds.Contains(s.StaffId))
@@ -128,7 +149,8 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetDoctorP
                 x.c?.Status,
                 x.c != null && x.c.Status == ConsultationStatusEnum.Completed
                     ? prescriptionIdByConsultationId.GetValueOrDefault(x.c.ConsultationId)
-                    : (long?)null))
+                    : (long?)null,
+                x.c != null && savedConsultationIds.Contains(x.c.ConsultationId)))
                 .ToList();
 
             return new DoctorPatientQueueResponse { Patients = patients };

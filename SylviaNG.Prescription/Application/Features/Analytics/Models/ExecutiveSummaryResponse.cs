@@ -16,6 +16,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Models
         public int TotalPrescriptions { get; set; }
         public int TotalMedicines { get; set; }
         public int TotalDoctors { get; set; }
+        public int TotalStaff { get; set; }
         public MonthOverMonthMetric PrescriptionTrend { get; set; } = new();
         public MonthOverMonthMetric NewPatientTrend { get; set; } = new();
         public List<MedicineCountEntry> TopMedicines { get; set; } = new();

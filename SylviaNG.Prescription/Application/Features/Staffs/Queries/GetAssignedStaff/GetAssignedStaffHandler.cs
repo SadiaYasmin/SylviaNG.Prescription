@@ -38,18 +38,18 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetAssignedS
             if (!string.IsNullOrWhiteSpace(query.SearchTerm))
             {
                 var term = query.SearchTerm.Trim().ToLower();
-                joined = joined.Where(x =>
-                    x.s.FullName.ToLower().Contains(term) ||
-                    (x.s.Department != null && x.s.Department.ToLower().Contains(term)));
+                joined = joined.Where(x => x.s.FullName.ToLower().Contains(term));
             }
 
-            var items = await joined.OrderBy(x => x.s.FullName).ToListAsync(cancellationToken);
+            // Matches the main Staff list's convention (newest-first by StaffId), so a doctor's
+            // "assigned to me" view isn't ordered differently from the admin Staff list.
+            var items = await joined.OrderByDescending(x => x.s.StaffId).ToListAsync(cancellationToken);
             var staffIds = items.Select(x => x.s.StaffId).ToList();
 
             var assignments = await _unitOfWork.Context.StaffDoctors
                 .Where(sd => staffIds.Contains(sd.StaffId))
                 .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId,
-                    (sd, d) => new { sd.StaffId, Doctor = new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName } })
+                    (sd, d) => new { sd.StaffId, Doctor = new AssignedDoctorSummary { DoctorId = d.DoctorId, FullName = d.FullName, Department = d.Department } })
                 .ToListAsync(cancellationToken);
             var assignedDoctorsByStaffId = assignments.ToLookup(x => x.StaffId, x => x.Doctor);
 

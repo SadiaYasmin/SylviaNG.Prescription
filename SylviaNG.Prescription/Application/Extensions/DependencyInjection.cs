@@ -29,6 +29,7 @@ namespace SylviaNG.Prescription.Application.Extensions
             // Add prescription-specific services here
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IDepartmentService, DepartmentService>();
             services.AddScoped<AdminAccountSeeder>();
             services.AddScoped<TemplateEngineSeeder>();
             services.AddScoped<MedicineCatalogSeeder>();

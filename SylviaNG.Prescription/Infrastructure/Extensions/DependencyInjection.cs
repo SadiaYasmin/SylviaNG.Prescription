@@ -80,6 +80,8 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
             services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
             services.AddScoped<IMedicineRepository, MedicineRepository>();
             services.AddScoped<IQuickAddPresetRepository, QuickAddPresetRepository>();
+            services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+            services.AddScoped<IVerificationCodeRepository, VerificationCodeRepository>();
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -89,6 +91,9 @@ namespace SylviaNG.Prescription.Infrastructure.Extensions
 
             // US-083: local-disk-backed image storage
             services.AddScoped<IFileStorageService, LocalDiskFileStorageService>();
+
+            // OTP / notification email delivery (forgot-password, change-email, change-password)
+            services.AddScoped<IEmailService, MailKitEmailService>();
 
             return services;
         }

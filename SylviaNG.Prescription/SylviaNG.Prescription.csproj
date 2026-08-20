@@ -12,8 +12,10 @@
   <ItemGroup>
 
     <!-- Multi-Tenancy Dependencies -->
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Finbuckle.MultiTenant.AspNetCore" Version="10.0.4" />
     <PackageReference Include="Finbuckle.MultiTenant.EntityFrameworkCore" Version="10.0.4" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
 
     <!-- MediatR Dependencies -->
     <PackageReference Include="MediatR" Version="14.1.0" />

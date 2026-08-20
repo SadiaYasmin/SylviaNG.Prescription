@@ -15,5 +15,9 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Models
         public long? TodayConsultationId { get; set; }
         public ConsultationStatusEnum? TodayConsultationStatus { get; set; }
         public long? TodayPrescriptionId { get; set; }
+        // True once today's linked prescription has ever been explicitly "Save as Draft"-ed —
+        // independent of TodayConsultationStatus, which flips back to InConsultation the
+        // moment a saved draft is reopened.
+        public bool TodayHasSavedDraft { get; set; }
     }
 }
