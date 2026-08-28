@@ -64,9 +64,6 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
             if (request.DoctorId.HasValue)
                 joined = joined.Where(x => x.c.DoctorId == request.DoctorId.Value);
 
-            if (request.Status.HasValue)
-                joined = joined.Where(x => x.c.Status == request.Status.Value);
-
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = request.SearchTerm.Trim().ToLower();
@@ -76,14 +73,19 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
                     x.p.Phone.ToLower().Contains(term));
             }
 
-            // Summary counts are computed over the FILTERED set (date/doctor/status/search
-            // all applied already), not global roster counts — matching the reference
-            // prototype's behavior.
-            var totalCount = await joined.CountAsync(cancellationToken);
+            // Summary tiles reflect date/doctor/search but NOT the status filter — they're an
+            // always-on breakdown, not a mirror of whatever status the table is currently
+            // narrowed to (a Status-filtered view would otherwise make 4 of the 5 tiles read 0).
             var waitingCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Waiting, cancellationToken);
             var inProgressCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.InConsultation, cancellationToken);
             var completedCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Completed, cancellationToken);
             var draftCount = await joined.CountAsync(x => x.c.Status == ConsultationStatusEnum.Draft, cancellationToken);
+            var summaryTotal = waitingCount + inProgressCount + completedCount + draftCount;
+
+            if (request.Status.HasValue)
+                joined = joined.Where(x => x.c.Status == request.Status.Value);
+
+            var totalCount = await joined.CountAsync(cancellationToken);
 
             var pageItems = await joined
                 .OrderByDescending(x => x.c.ConsultationId)
@@ -101,7 +103,7 @@ namespace SylviaNG.Prescription.Application.Features.Consultations.Queries.GetCo
                 PageSize = pageSize,
                 Summary = new ConsultationListSummary
                 {
-                    Total = totalCount,
+                    Total = summaryTotal,
                     Waiting = waitingCount,
                     InProgress = inProgressCount,
                     Completed = completedCount,

@@ -32,6 +32,11 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMedici
 
             var aggregation = MedicinePrescribingAggregator.Aggregate(finalized);
 
+            var totalPrescriptions = finalized.Count;
+            var totalMedicinesPrescribed = aggregation.CountsByKey.Values.Sum();
+            var uniqueMedicinesPrescribed = aggregation.CountsByKey.Count;
+            var avgMedicinesPerPrescription = AnalyticsMath.SafeDivide(totalMedicinesPrescribed, totalPrescriptions, 2);
+
             var topPrescribed = aggregation.CountsByKey
                 .OrderByDescending(kvp => kvp.Value)
                 .Take(query.TopN)
@@ -69,6 +74,10 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMedici
 
             return new MedicineAnalyticsResponse
             {
+                TotalPrescriptions = totalPrescriptions,
+                TotalMedicinesPrescribed = totalMedicinesPrescribed,
+                UniqueMedicinesPrescribed = uniqueMedicinesPrescribed,
+                AvgMedicinesPerPrescription = avgMedicinesPerPrescription,
                 TopPrescribedMedicines = topPrescribed,
                 CategoryBreakdown = categoryBreakdown,
                 RarelyUsedMedicines = rarelyUsed,

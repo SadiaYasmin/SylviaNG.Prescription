@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
 using SylviaNG.Prescription.Application.Mappings;
+using SylviaNG.Prescription.Domain.Enums;
 
 namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorList
 {
@@ -10,11 +11,16 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorLi
     {
         private readonly IDoctorRepository _doctorRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IPrescriptionRepository _prescriptionRepository;
 
-        public GetDoctorListHandler(IDoctorRepository doctorRepository, IUserRepository userRepository)
+        public GetDoctorListHandler(
+            IDoctorRepository doctorRepository,
+            IUserRepository userRepository,
+            IPrescriptionRepository prescriptionRepository)
         {
             _doctorRepository = doctorRepository;
             _userRepository = userRepository;
+            _prescriptionRepository = prescriptionRepository;
         }
 
         public async Task<DoctorListResponse> Handle(GetDoctorListQuery query, CancellationToken cancellationToken)
@@ -56,6 +62,10 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorLi
                 .Join(_doctorRepository.Query(), u => u.UserId, d => d.UserId, (u, d) => u)
                 .CountAsync(u => u.IsActive, cancellationToken);
 
+            var finalized = await _prescriptionRepository.Query()
+                .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
+                .ToListAsync(cancellationToken);
+
             return new DoctorListResponse
             {
                 Doctors = pageItems.Select(x => x.d.ToSummaryResponse(x.u)).ToList(),
@@ -66,10 +76,8 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorLi
                 {
                     TotalDoctors = totalDoctors,
                     ActiveDoctors = activeDoctors,
-                    // Prescription/Medicine entities don't exist yet (Epic D/F) — real
-                    // counts land when those tables do, not before.
-                    TotalPrescriptions = 0,
-                    TotalMedicineEntries = 0
+                    TotalPrescriptions = finalized.Count,
+                    TotalMedicineEntries = finalized.Sum(p => p.GetMedicines().Count)
                 }
             };
         }

@@ -7,6 +7,7 @@ using SylviaNG.Prescription.Application.Interfaces.Services;
 using SylviaNG.Prescription.Domain.Entities;
 using SylviaNG.Prescription.Domain.Enums;
 using SylviaNG.Prescription.SharedKernel.Generic;
+using SylviaNG.Prescription.SharedKernel.Utils;
 
 namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.CreateStaff
 {
@@ -62,7 +63,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.CreateStaff
 
             foreach (var doctorId in doctorIds)
             {
-                _unitOfWork.Context.StaffDoctors.Add(new StaffDoctor { StaffId = staff.StaffId, DoctorId = doctorId });
+                _unitOfWork.Context.StaffDoctors.Add(new StaffDoctor { StaffId = staff.StaffId, DoctorId = doctorId, CreatedAt = DateTimeUtility.NowUtc() });
             }
             await _unitOfWork.SaveChangesAsync();
 

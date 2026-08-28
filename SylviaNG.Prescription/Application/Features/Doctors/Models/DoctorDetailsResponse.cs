@@ -14,6 +14,10 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
         public double AvgMedicinesPerPrescription { get; set; }
         public int TotalMedicinesPrescribed { get; set; }
         public List<DoctorTopMedicine> TopMedicines { get; set; } = new();
+
+        /// <summary>Every medicine this doctor has ever prescribed, sorted by Times Prescribed descending — unlike <see cref="TopMedicines"/>, never truncated. Backs the "View All" modal and the Medicine Distribution chart's "Others" segment.</summary>
+        public List<DoctorTopMedicine> AllMedicines { get; set; } = new();
+
         public List<DoctorRecentPrescription> RecentPrescriptions { get; set; } = new();
         public List<DoctorActivityTrendPoint> ActivityTrend { get; set; } = new();
 
@@ -21,7 +25,8 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Models
         /// US-073's busiest-consultation-hours histogram — always 24 entries (Hour 0–23),
         /// bucketed off <see cref="SylviaNG.Prescription.Domain.Entities.Consultation.CheckInAt"/>
         /// (never <c>Audit.CreatedAt</c>, which is never populated anywhere in this codebase).
-        /// Reported in UTC hour-of-day — there is no hospital-timezone setting to convert to.
+        /// Reported in Bangladesh Time (UTC+6, no DST) hour-of-day, since the hospital
+        /// operates in Dhaka.
         /// </summary>
         public List<HourBucket> BusiestHours { get; set; } = new();
     }

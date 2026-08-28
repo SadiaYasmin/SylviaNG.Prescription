@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SylviaNG.Prescription.Application.Features.Analytics;
 using SylviaNG.Prescription.Application.Features.Analytics.Models;
+using SylviaNG.Prescription.Application.Features.Analytics.Queries.GetBusiestConsultationHours;
 using SylviaNG.Prescription.Application.Features.Analytics.Queries.GetDoctorLeaderboard;
 using SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecutiveSummary;
 using SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMedicineAnalytics;
@@ -49,19 +50,30 @@ namespace SylviaNG.Prescription.Controllers
         }
 
         [Authorize(Roles = "Admin")]
+        [HttpGet("doctors/busiest-hours")]
+        public async Task<ActionResult<BusiestConsultationHoursResponse>> GetBusiestConsultationHours()
+        {
+            var result = await _mediator.Send(new GetBusiestConsultationHoursQuery());
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpGet("prescription-trend")]
         public async Task<ActionResult<PrescriptionVolumeTrendResponse>> GetPrescriptionVolumeTrend(
-            [FromQuery] AnalyticsGranularity granularity = AnalyticsGranularity.Day)
+            [FromQuery] AnalyticsGranularity granularity = AnalyticsGranularity.Day,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null)
         {
-            var result = await _mediator.Send(new GetPrescriptionVolumeTrendQuery(granularity));
+            var result = await _mediator.Send(new GetPrescriptionVolumeTrendQuery(granularity, from, to));
             return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("patients")]
-        public async Task<ActionResult<PatientAnalyticsResponse>> GetPatientAnalytics()
+        public async Task<ActionResult<PatientAnalyticsResponse>> GetPatientAnalytics(
+            [FromQuery] AnalyticsGranularity granularity = AnalyticsGranularity.Day)
         {
-            var result = await _mediator.Send(new GetPatientAnalyticsQuery());
+            var result = await _mediator.Send(new GetPatientAnalyticsQuery(granularity));
             return Ok(result);
         }
 

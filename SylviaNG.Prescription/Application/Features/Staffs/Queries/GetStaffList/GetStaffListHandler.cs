@@ -32,8 +32,10 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffList
                 select new { s, u };
 
             // Staff has no own Department column (a staff member can support doctors from more
-            // than one department — see Staff.cs) — both the search box and the Department
-            // filter match against assigned doctors' Department instead, via a StaffId subquery.
+            // than one department — see Staff.cs) — the dedicated Department filter matches
+            // against assigned doctors' Department instead, via a StaffId subquery. The free-text
+            // search box only matches the staff member's own name/username/phone, not department
+            // (department has its own filter field, so matching it in search too was redundant).
             var staffDepartments = _unitOfWork.Context.StaffDoctors
                 .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId, (sd, d) => new { sd.StaffId, d.Department })
                 .Where(x => x.Department != null);
@@ -41,11 +43,10 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Queries.GetStaffList
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = request.SearchTerm.Trim().ToLower();
-                var staffIdsByDeptTerm = staffDepartments.Where(x => x.Department!.ToLower().Contains(term)).Select(x => x.StaffId);
                 joined = joined.Where(x =>
                     x.s.FullName.ToLower().Contains(term) ||
                     x.u.Username.ToLower().Contains(term) ||
-                    staffIdsByDeptTerm.Contains(x.s.StaffId));
+                    x.s.Phone.ToLower().Contains(term));
             }
 
             if (!string.IsNullOrWhiteSpace(request.Department))

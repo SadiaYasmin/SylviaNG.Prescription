@@ -1,9 +1,10 @@
 namespace SylviaNG.Prescription.Application.Features.Doctors.Models
 {
     /// <summary>
-    /// Roster-wide stat tiles (US-054). TotalPrescriptions/TotalMedicineEntries are
-    /// hardcoded to 0 — Prescription/Medicine entities don't exist yet (Epic D/F) — and
-    /// should become real aggregate queries once those tables land, not before.
+    /// Roster-wide stat tiles (US-054). TotalPrescriptions is the count of all finalized
+    /// prescriptions; TotalMedicineEntries is the sum of medicine line items across those
+    /// prescriptions (same convention as <see cref="DoctorPerformanceStats.TotalMedicinesPrescribed"/>
+    /// on the per-doctor drill-down) — not the medicine catalog row count.
     /// </summary>
     public class DoctorListSummary
     {

@@ -52,8 +52,9 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetPatien
                 }
             }
 
-            var newRegistrationTrend = AnalyticsDateBucketing.BuildTrend(
-                patients, p => (DateTime?)p.RegisteredAt, AnalyticsGranularity.Day);
+            var (trendStart, trendEnd) = AnalyticsDateBucketing.GetDefaultRange(query.Granularity, DateTime.UtcNow);
+            var newRegistrationTrend = AnalyticsDateBucketing.BuildTrendZeroFilled(
+                patients, p => (DateTime?)p.RegisteredAt, query.Granularity, trendStart, trendEnd);
 
             var averageVisitsPerPatient = AnalyticsMath.SafeDivide(consultations.Count, patients.Count, 0);
 

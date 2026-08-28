@@ -11,9 +11,15 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetPrescr
     {
         public AnalyticsGranularity Granularity { get; set; }
 
-        public GetPrescriptionVolumeTrendQuery(AnalyticsGranularity granularity = AnalyticsGranularity.Day)
+        /// <summary>Inclusive UTC range bounds. Null on either end falls back to <see cref="AnalyticsDateBucketing.GetDefaultRange"/> for the chosen granularity (30 days / 12 weeks / 12 months).</summary>
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
+
+        public GetPrescriptionVolumeTrendQuery(AnalyticsGranularity granularity = AnalyticsGranularity.Day, DateTime? from = null, DateTime? to = null)
         {
             Granularity = granularity;
+            From = from;
+            To = to;
         }
     }
 }

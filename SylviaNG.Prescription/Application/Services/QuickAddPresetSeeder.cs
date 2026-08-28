@@ -73,11 +73,15 @@ namespace SylviaNG.Prescription.Application.Services
                 ("Acute Gastritis", new { text = "Acute Gastritis", icd10 = (string?)null }),
                 ("Upper Respiratory Tract Infection", new { text = "Upper Respiratory Tract Infection", icd10 = (string?)"J06.9" }),
             ],
+            // Investigation's payload shape is { text }, same as the frontend's 'text'
+            // previewPayload/manage-form branch expects — a bare string here used to
+            // serialize as a raw JSON string, so JSON.parse(...).text came back undefined
+            // and every seeded Investigation preset rendered blank in the list.
             [QuickAddSectionTypeEnum.Investigation] =
             [
-                ("CBC", "CBC"),
-                ("Blood Sugar (Random)", "Blood Sugar (Random)"),
-                ("Chest X-Ray", "Chest X-Ray"),
+                ("CBC", new { text = "CBC" }),
+                ("Blood Sugar (Random)", new { text = "Blood Sugar (Random)" }),
+                ("Chest X-Ray", new { text = "Chest X-Ray" }),
             ],
             [QuickAddSectionTypeEnum.Advice] =
             [

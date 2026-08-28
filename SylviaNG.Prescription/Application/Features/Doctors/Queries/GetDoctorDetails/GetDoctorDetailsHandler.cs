@@ -59,11 +59,11 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
             var completedConsultations = consultations.Count(c => c.Status == ConsultationStatusEnum.Completed);
 
             var aggregation = MedicinePrescribingAggregator.Aggregate(finalized);
-            var topMedicines = aggregation.CountsByKey
+            var allMedicines = aggregation.CountsByKey
                 .OrderByDescending(kvp => kvp.Value)
-                .Take(5)
                 .Select(kvp => new DoctorTopMedicine { Name = aggregation.LabelByKey[kvp.Key], Count = kvp.Value })
                 .ToList();
+            var topMedicines = allMedicines.Take(5).ToList();
 
             var recentPrescriptionRecords = finalized
                 .OrderByDescending(p => p.FinalizedAt)
@@ -84,13 +84,18 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
                 })
                 .ToList();
 
+            var (trendStart, trendEnd) = AnalyticsDateBucketing.GetDefaultRange(query.ActivityGranularity, now);
             var activityTrend = AnalyticsDateBucketing
-                .BuildTrend(finalized, p => p.FinalizedAt, AnalyticsGranularity.Day)
-                .Select(point => new DoctorActivityTrendPoint { Period = DateTime.Parse(point.BucketKey), Count = point.Count })
+                .BuildTrendZeroFilled(finalized, p => p.FinalizedAt, query.ActivityGranularity, trendStart, trendEnd)
+                .Select(point => new DoctorActivityTrendPoint { Period = AnalyticsDateBucketing.ParseBucketKey(point.BucketKey), Count = point.Count })
                 .ToList();
 
+            var countsByBdtHour = consultations
+                .GroupBy(c => (c.CheckInAt.Hour + AnalyticsDateBucketing.BangladeshUtcOffsetHours) % 24)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             var busiestHours = Enumerable.Range(0, 24)
-                .Select(hour => new HourBucket { Hour = hour, Count = consultations.Count(c => c.CheckInAt.Hour == hour) })
+                .Select(hour => new HourBucket { Hour = hour, Count = countsByBdtHour.GetValueOrDefault(hour) })
                 .ToList();
 
             return new DoctorDetailsResponse
@@ -106,6 +111,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
                     AvgMedicinesPerPrescription = AnalyticsMath.SafeDivide(totalMedicinesPrescribed, finalized.Count),
                     TotalMedicinesPrescribed = totalMedicinesPrescribed,
                     TopMedicines = topMedicines,
+                    AllMedicines = allMedicines,
                     RecentPrescriptions = recentPrescriptions,
                     ActivityTrend = activityTrend,
                     BusiestHours = busiestHours

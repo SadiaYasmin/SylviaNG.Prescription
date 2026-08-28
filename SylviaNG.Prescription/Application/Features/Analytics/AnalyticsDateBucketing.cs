@@ -10,6 +10,11 @@ namespace SylviaNG.Prescription.Application.Features.Analytics
     /// </summary>
     public static class AnalyticsDateBucketing
     {
+        /// <summary>Bangladesh has no DST, so a flat UTC+6 shift is always correct — the hospital operates in Dhaka.</summary>
+        public const int BangladeshUtcOffsetHours = 6;
+
+        public static DateTime ToBangladeshTime(DateTime utc) => utc.AddHours(BangladeshUtcOffsetHours);
+
         public static string BucketKey(DateTime date, AnalyticsGranularity granularity)
         {
             switch (granularity)
@@ -55,6 +60,98 @@ namespace SylviaNG.Prescription.Application.Features.Analytics
                 .OrderBy(kvp => kvp.Key, StringComparer.Ordinal)
                 .Select(kvp => new TrendPoint { BucketKey = kvp.Key, Count = kvp.Value })
                 .ToList();
+        }
+
+        /// <summary>
+        /// Default trailing window for a trend chart when the caller doesn't pin an explicit
+        /// range: 30 days / 12 weeks / 12 months, all anchored to <paramref name="nowUtc"/>.
+        /// </summary>
+        public static (DateTime Start, DateTime End) GetDefaultRange(AnalyticsGranularity granularity, DateTime nowUtc)
+        {
+            return granularity switch
+            {
+                AnalyticsGranularity.Week => (nowUtc.AddDays(-7 * 11), nowUtc),
+                AnalyticsGranularity.Month => (nowUtc.AddMonths(-11), nowUtc),
+                _ => (nowUtc.AddDays(-29), nowUtc),
+            };
+        }
+
+        /// <summary>
+        /// Same as <see cref="BuildTrend{T}"/>, but converts every date to Bangladesh Time
+        /// before bucketing (so day/week/month boundaries match the hospital's local
+        /// calendar, not UTC), and zero-fills every bucket in
+        /// [<paramref name="rangeStartUtc"/>, <paramref name="rangeEndUtc"/>] — including
+        /// buckets with no matching items — so the chart never silently drops chronology.
+        /// </summary>
+        public static List<TrendPoint> BuildTrendZeroFilled<T>(
+            IEnumerable<T> items,
+            Func<T, DateTime?> dateSelector,
+            AnalyticsGranularity granularity,
+            DateTime rangeStartUtc,
+            DateTime rangeEndUtc)
+        {
+            var counts = new Dictionary<string, int>();
+            foreach (var item in items)
+            {
+                var date = dateSelector(item);
+                if (date == null)
+                {
+                    continue;
+                }
+
+                var key = BucketKey(ToBangladeshTime(date.Value), granularity);
+                counts[key] = counts.GetValueOrDefault(key) + 1;
+            }
+
+            var sequence = GenerateBucketSequence(ToBangladeshTime(rangeStartUtc), ToBangladeshTime(rangeEndUtc), granularity);
+
+            return sequence
+                .Select(key => new TrendPoint { BucketKey = key, Count = counts.GetValueOrDefault(key) })
+                .ToList();
+        }
+
+        /// <summary>Every bucket key from <paramref name="start"/> to <paramref name="end"/> inclusive, in chronological order — the zero-fill backbone for <see cref="BuildTrendZeroFilled{T}"/>.</summary>
+        private static List<string> GenerateBucketSequence(DateTime start, DateTime end, AnalyticsGranularity granularity)
+        {
+            var keys = new List<string>();
+            if (start > end)
+            {
+                return keys;
+            }
+
+            switch (granularity)
+            {
+                case AnalyticsGranularity.Week:
+                    var weekOffset = ((int)start.DayOfWeek + 6) % 7;
+                    for (var w = start.Date.AddDays(-weekOffset); w <= end.Date; w = w.AddDays(7))
+                    {
+                        keys.Add(BucketKey(w, granularity));
+                    }
+                    break;
+
+                case AnalyticsGranularity.Month:
+                    for (var m = new DateTime(start.Year, start.Month, 1); m <= end.Date; m = m.AddMonths(1))
+                    {
+                        keys.Add(BucketKey(m, granularity));
+                    }
+                    break;
+
+                default:
+                    for (var d = start.Date; d <= end.Date; d = d.AddDays(1))
+                    {
+                        keys.Add(BucketKey(d, granularity));
+                    }
+                    break;
+            }
+
+            return keys;
+        }
+
+        /// <summary>Parses a bucket key back into a <see cref="DateTime"/> — "yyyy-MM-dd" for Day/Week, "yyyy-MM" (day defaults to the 1st) for Month.</summary>
+        public static DateTime ParseBucketKey(string key)
+        {
+            var format = key.Length == 7 ? "yyyy-MM" : "yyyy-MM-dd";
+            return DateTime.ParseExact(key, format, System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }

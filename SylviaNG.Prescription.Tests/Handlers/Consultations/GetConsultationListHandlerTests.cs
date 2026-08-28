@@ -194,6 +194,30 @@ public class GetConsultationListHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WithStatusFilter_SummaryShouldStillReflectFullDateFilteredBreakdown()
+    {
+        // Arrange: filtering the table down to Completed must not collapse the summary tiles
+        // to just that status — Waiting/InProgress/Draft should still show their true counts.
+        SetUpConsultations(
+            Make(1, 1, 10, Today, ConsultationStatusEnum.Waiting),
+            Make(2, 2, 20, Today, ConsultationStatusEnum.InConsultation),
+            Make(3, 1, 10, Today, ConsultationStatusEnum.Completed),
+            Make(4, 2, 20, Today, ConsultationStatusEnum.Completed));
+
+        // Act
+        var result = await _handler.Handle(new GetConsultationListQuery(
+            new ConsultationListRequest { Status = ConsultationStatusEnum.Completed }), default);
+
+        // Assert
+        result.Consultations.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
+        result.Summary.Total.Should().Be(4);
+        result.Summary.Waiting.Should().Be(1);
+        result.Summary.InProgress.Should().Be(1);
+        result.Summary.Completed.Should().Be(2);
+    }
+
+    [Fact]
     public async Task Handle_ShouldPaginateAndOrderNewestFirst()
     {
         // Arrange

@@ -42,11 +42,17 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMyStaf
             var patientsRegisteredByMe = await _patientRepository.Query()
                 .CountAsync(p => p.RegisteredByStaffId == staffId, cancellationToken);
 
-            var assignedDoctors = await _unitOfWork.Context.StaffDoctors
-                .Where(sd => sd.StaffId == staffId)
-                .Join(_unitOfWork.Context.Doctors, sd => sd.DoctorId, d => d.DoctorId,
-                    (sd, d) => new AssignedDoctorEntry { DoctorId = d.DoctorId, FullName = d.FullName })
-                .ToListAsync(cancellationToken);
+            // Ordered most-recently-assigned first (StaffDoctorId descending, the same
+            // insertion-order-via-PK proxy GetAssignedDoctorsHandler uses — StaffDoctor's own
+            // CreatedAt is never populated) so the dashboard card can show assignedDoctors[0] as
+            // the "most recently assigned doctor" preview without re-sorting client-side.
+            var assignedDoctorsQuery =
+                from sd in _unitOfWork.Context.StaffDoctors
+                where sd.StaffId == staffId
+                join d in _unitOfWork.Context.Doctors on sd.DoctorId equals d.DoctorId
+                orderby sd.StaffDoctorId descending
+                select new AssignedDoctorEntry { DoctorId = d.DoctorId, FullName = d.FullName, Department = d.Department };
+            var assignedDoctors = await assignedDoctorsQuery.ToListAsync(cancellationToken);
 
             return new MyStaffAnalyticsResponse
             {

@@ -90,14 +90,17 @@ public enum QuickAddSectionTypeEnum
 
 /// <summary>
 /// Which date-range mode GetConsultationList's admin listing filters by (Epic C).
-/// Custom uses <c>Date</c>; Range uses <c>FromDate</c>/<c>ToDate</c>.
+/// Custom uses <c>Date</c>; Range uses <c>FromDate</c>/<c>ToDate</c>. <c>All</c> applies no
+/// date filter at all — the handler's switch has no case for it, so it falls through
+/// untouched, same effect as a "from the beginning of time" range.
 /// </summary>
 public enum ConsultationDateModeEnum
 {
     Today,
     Yesterday,
     Custom,
-    Range
+    Range,
+    All
 }
 
 /// <summary>

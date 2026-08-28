@@ -4,6 +4,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Models
     {
         public long DoctorId { get; set; }
         public string FullName { get; set; } = string.Empty;
+        public string? Department { get; set; }
     }
 
     /// <summary>US-078: a staff member's own scoped stats.</summary>

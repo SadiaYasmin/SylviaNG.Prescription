@@ -3,7 +3,9 @@ using MockQueryable;
 using Moq;
 using SylviaNG.Prescription.Application.Features.Doctors.Models;
 using SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorList;
+using SylviaNG.Prescription.Application.Features.Prescriptions.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
+using SylviaNG.Prescription.Application.Mappings;
 using SylviaNG.Prescription.Domain.Entities;
 using SylviaNG.Prescription.Domain.Enums;
 
@@ -13,6 +15,7 @@ public class GetDoctorListHandlerTests
 {
     private readonly Mock<IDoctorRepository> _doctorRepositoryMock = new();
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
+    private readonly Mock<IPrescriptionRepository> _prescriptionRepositoryMock = new();
     private readonly GetDoctorListHandler _handler;
 
     private readonly List<Doctor> _doctors = new()
@@ -27,11 +30,28 @@ public class GetDoctorListHandlerTests
         new User { UserId = 2, KeycloakId = "kc-2", Username = "bashir", Role = UserRoleEnum.Doctor, IsActive = false },
     };
 
+    private readonly List<PrescriptionRecord> _prescriptions;
+
+    private static PrescriptionRecord BuildPrescription(long id, long doctorId, PrescriptionStatusEnum status, params string[] medicines)
+    {
+        var record = new PrescriptionRecord { PrescriptionId = id, DoctorId = doctorId, Status = status };
+        record.SetMedicines(medicines.Select(m => new MedicineItem { Medicine = m }).ToList());
+        return record;
+    }
+
     public GetDoctorListHandlerTests()
     {
+        _prescriptions = new List<PrescriptionRecord>
+        {
+            BuildPrescription(1, 1, PrescriptionStatusEnum.Finalized, "Napa", "Seclo"),
+            BuildPrescription(2, 2, PrescriptionStatusEnum.Finalized, "Fexo"),
+            BuildPrescription(3, 1, PrescriptionStatusEnum.Draft, "Nabumetone"),
+        };
+
         _doctorRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(_doctors.BuildMock());
         _userRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(_users.BuildMock());
-        _handler = new GetDoctorListHandler(_doctorRepositoryMock.Object, _userRepositoryMock.Object);
+        _prescriptionRepositoryMock.Setup(r => r.Query(It.IsAny<bool>())).Returns(_prescriptions.BuildMock());
+        _handler = new GetDoctorListHandler(_doctorRepositoryMock.Object, _userRepositoryMock.Object, _prescriptionRepositoryMock.Object);
     }
 
     [Fact]
@@ -44,8 +64,8 @@ public class GetDoctorListHandlerTests
         result.Doctors.Should().HaveCount(2);
         result.Summary.TotalDoctors.Should().Be(2);
         result.Summary.ActiveDoctors.Should().Be(1);
-        result.Summary.TotalPrescriptions.Should().Be(0);
-        result.Summary.TotalMedicineEntries.Should().Be(0);
+        result.Summary.TotalPrescriptions.Should().Be(2);
+        result.Summary.TotalMedicineEntries.Should().Be(3);
     }
 
     [Fact]

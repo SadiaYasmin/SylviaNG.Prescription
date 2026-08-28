@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SylviaNG.Prescription.Application.Features.Analytics;
 using SylviaNG.Prescription.Application.Features.Doctors.Commands.CreateDoctor;
 using SylviaNG.Prescription.Application.Features.Doctors.Commands.DeactivateDoctor;
 using SylviaNG.Prescription.Application.Features.Doctors.Commands.UpdateDoctor;
@@ -56,9 +57,11 @@ namespace SylviaNG.Prescription.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<DoctorDetailsResponse>> GetDetails(long id)
+        public async Task<ActionResult<DoctorDetailsResponse>> GetDetails(
+            long id,
+            [FromQuery] AnalyticsGranularity activityGranularity = AnalyticsGranularity.Day)
         {
-            var result = await _mediator.Send(new GetDoctorDetailsQuery(id));
+            var result = await _mediator.Send(new GetDoctorDetailsQuery(id, activityGranularity));
             return Ok(result);
         }
     }

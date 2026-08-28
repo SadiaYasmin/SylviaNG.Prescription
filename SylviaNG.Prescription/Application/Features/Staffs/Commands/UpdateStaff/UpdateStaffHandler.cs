@@ -7,6 +7,7 @@ using SylviaNG.Prescription.Application.Interfaces.Repositories;
 using SylviaNG.Prescription.Application.Mappings;
 using SylviaNG.Prescription.Domain.Entities;
 using SylviaNG.Prescription.SharedKernel.Generic;
+using SylviaNG.Prescription.SharedKernel.Utils;
 
 namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.UpdateStaff
 {
@@ -73,7 +74,7 @@ namespace SylviaNG.Prescription.Application.Features.Staffs.Commands.UpdateStaff
 
             var toAdd = requestedDoctorIds
                 .Where(id => !existingDoctorIds.Contains(id))
-                .Select(id => new StaffDoctor { StaffId = staff.StaffId, DoctorId = id });
+                .Select(id => new StaffDoctor { StaffId = staff.StaffId, DoctorId = id, CreatedAt = DateTimeUtility.NowUtc() });
             _unitOfWork.Context.StaffDoctors.AddRange(toAdd);
 
             _staffRepository.Update(staff);
