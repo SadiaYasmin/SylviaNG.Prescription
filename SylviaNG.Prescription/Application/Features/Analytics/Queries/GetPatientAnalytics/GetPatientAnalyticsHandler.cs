@@ -7,9 +7,12 @@ using SylviaNG.Prescription.Domain.Enums;
 namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetPatientAnalytics
 {
     /// <summary>
-    /// US-075. "New vs returning" is a whole-population classification over all-time
-    /// consultation counts (<c>&lt;=1</c> visit ever = new, <c>&gt;1</c> = returning) — not a
-    /// per-visit flag — matching the reference prototype exactly.
+    /// US-075. New = registered inside the caller-selected range, regardless of whether
+    /// they've been consulted yet. Returning = registered BEFORE the range started AND has
+    /// at least one Completed consultation inside it. Both are counted as distinct patients
+    /// (a patient with several Completed consultations in-range still contributes exactly 1
+    /// to Returning) — mirrored exactly by <c>GetPatientListHandler</c>'s NewOnly/ReturningOnly
+    /// drill-down filters.
     /// </summary>
     public class GetPatientAnalyticsHandler : IRequestHandler<GetPatientAnalyticsQuery, PatientAnalyticsResponse>
     {
@@ -29,34 +32,36 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetPatien
 
         public async Task<PatientAnalyticsResponse> Handle(GetPatientAnalyticsQuery query, CancellationToken cancellationToken)
         {
+            var from = DateTime.SpecifyKind(query.From, DateTimeKind.Utc);
+            var to = DateTime.SpecifyKind(query.To, DateTimeKind.Utc);
+
             var patients = await _patientRepository.Query().ToListAsync(cancellationToken);
-            var consultations = await _consultationRepository.Query().ToListAsync(cancellationToken);
-            var finalized = await _prescriptionRepository.Query()
+            var allConsultations = await _consultationRepository.Query().ToListAsync(cancellationToken);
+            var allFinalized = await _prescriptionRepository.Query()
                 .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
                 .ToListAsync(cancellationToken);
 
-            var visitCountsByPatient = consultations.GroupBy(c => c.PatientId).ToDictionary(g => g.Key, g => g.Count());
+            var consultationsInRange = allConsultations.Where(c => c.CheckInAt >= from && c.CheckInAt < to).ToList();
+            var finalized = allFinalized.Where(p => p.FinalizedAt >= from && p.FinalizedAt < to).ToList();
 
-            var newPatients = 0;
-            var returningPatients = 0;
-            foreach (var patient in patients)
-            {
-                var visits = visitCountsByPatient.GetValueOrDefault(patient.PatientId);
-                if (visits <= 1)
-                {
-                    newPatients++;
-                }
-                else
-                {
-                    returningPatients++;
-                }
-            }
+            var seenPatientIdsInRange = consultationsInRange.Select(c => c.PatientId).Distinct().ToList();
 
-            var (trendStart, trendEnd) = AnalyticsDateBucketing.GetDefaultRange(query.Granularity, DateTime.UtcNow);
+            var newPatients = patients.Count(p => p.RegisteredAt >= from && p.RegisteredAt < to);
+
+            var patientsById = patients.ToDictionary(p => p.PatientId);
+            var completedPatientIdsInRange = consultationsInRange
+                .Where(c => c.Status == ConsultationStatusEnum.Completed)
+                .Select(c => c.PatientId)
+                .Distinct()
+                .ToList();
+            var returningPatients = completedPatientIdsInRange.Count(id =>
+                patientsById.TryGetValue(id, out var patient) && patient.RegisteredAt < from);
+
+            var (trendStart, trendEnd) = (from, to);
             var newRegistrationTrend = AnalyticsDateBucketing.BuildTrendZeroFilled(
                 patients, p => (DateTime?)p.RegisteredAt, query.Granularity, trendStart, trendEnd);
 
-            var averageVisitsPerPatient = AnalyticsMath.SafeDivide(consultations.Count, patients.Count, 0);
+            var averageVisitsPerPatient = AnalyticsMath.SafeDivide(consultationsInRange.Count, seenPatientIdsInRange.Count, 0);
 
             var topDiagnoses = AnalyticsDiagnosisAggregator.TopDiagnoses(finalized, 10);
             var chronicPatterns = AnalyticsDiagnosisAggregator.ChronicPatterns(finalized);

@@ -35,25 +35,31 @@ namespace SylviaNG.Prescription.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet("medicines")]
-        public async Task<ActionResult<MedicineAnalyticsResponse>> GetMedicineAnalytics()
+        public async Task<ActionResult<MedicineAnalyticsResponse>> GetMedicineAnalytics(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to)
         {
-            var result = await _mediator.Send(new GetMedicineAnalyticsQuery());
+            var result = await _mediator.Send(new GetMedicineAnalyticsQuery(from, to));
             return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("doctors/leaderboard")]
-        public async Task<ActionResult<List<DoctorLeaderboardEntry>>> GetDoctorLeaderboard()
+        public async Task<ActionResult<List<DoctorLeaderboardEntry>>> GetDoctorLeaderboard(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to)
         {
-            var result = await _mediator.Send(new GetDoctorLeaderboardQuery());
+            var result = await _mediator.Send(new GetDoctorLeaderboardQuery(from, to));
             return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("doctors/busiest-hours")]
-        public async Task<ActionResult<BusiestConsultationHoursResponse>> GetBusiestConsultationHours()
+        public async Task<ActionResult<BusiestConsultationHoursResponse>> GetBusiestConsultationHours(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to)
         {
-            var result = await _mediator.Send(new GetBusiestConsultationHoursQuery());
+            var result = await _mediator.Send(new GetBusiestConsultationHoursQuery(from, to));
             return Ok(result);
         }
 
@@ -71,26 +77,32 @@ namespace SylviaNG.Prescription.Controllers
         [Authorize(Roles = "Admin")]
         [HttpGet("patients")]
         public async Task<ActionResult<PatientAnalyticsResponse>> GetPatientAnalytics(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to,
             [FromQuery] AnalyticsGranularity granularity = AnalyticsGranularity.Day)
         {
-            var result = await _mediator.Send(new GetPatientAnalyticsQuery(granularity));
+            var result = await _mediator.Send(new GetPatientAnalyticsQuery(from, to, granularity));
             return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet("executive-summary")]
-        public async Task<ActionResult<ExecutiveSummaryResponse>> GetExecutiveSummary()
+        public async Task<ActionResult<ExecutiveSummaryResponse>> GetExecutiveSummary(
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime to)
         {
-            var result = await _mediator.Send(new GetExecutiveSummaryQuery());
+            var result = await _mediator.Send(new GetExecutiveSummaryQuery(from, to));
             return Ok(result);
         }
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("my/doctor-stats")]
-        public async Task<ActionResult<MyDoctorAnalyticsResponse>> GetMyDoctorAnalytics()
+        public async Task<ActionResult<MyDoctorAnalyticsResponse>> GetMyDoctorAnalytics(
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null)
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _mediator.Send(new GetMyDoctorAnalyticsQuery(keycloakId));
+            var result = await _mediator.Send(new GetMyDoctorAnalyticsQuery(keycloakId, from, to));
             return Ok(result);
         }
 

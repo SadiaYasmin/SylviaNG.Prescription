@@ -5,5 +5,13 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetDoctor
 {
     public class GetDoctorLeaderboardQuery : IRequest<List<DoctorLeaderboardEntry>>
     {
+        public DateTime From { get; set; }
+        public DateTime To { get; set; }
+
+        public GetDoctorLeaderboardQuery(DateTime from, DateTime to)
+        {
+            From = from;
+            To = to;
+        }
     }
 }

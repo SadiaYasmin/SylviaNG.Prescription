@@ -24,7 +24,12 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetBusies
 
         public async Task<BusiestConsultationHoursResponse> Handle(GetBusiestConsultationHoursQuery query, CancellationToken cancellationToken)
         {
-            var consultations = await _consultationRepository.Query().ToListAsync(cancellationToken);
+            var from = DateTime.SpecifyKind(query.From, DateTimeKind.Utc);
+            var to = DateTime.SpecifyKind(query.To, DateTimeKind.Utc);
+
+            var consultations = (await _consultationRepository.Query().ToListAsync(cancellationToken))
+                .Where(c => c.CheckInAt >= from && c.CheckInAt < to)
+                .ToList();
 
             var countsByBdtHour = consultations
                 .GroupBy(c => (c.CheckInAt.Hour + BangladeshUtcOffsetHours) % 24)

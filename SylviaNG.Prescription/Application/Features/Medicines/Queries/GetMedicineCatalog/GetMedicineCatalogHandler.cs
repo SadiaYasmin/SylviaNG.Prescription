@@ -57,6 +57,16 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
             {
                 finalizedQuery = finalizedQuery.Where(p => p.DoctorId == caller.DoctorId!.Value);
             }
+            else if (caller.Role == UserRoleEnum.Admin && query.DoctorId.HasValue)
+            {
+                finalizedQuery = finalizedQuery.Where(p => p.DoctorId == query.DoctorId.Value);
+            }
+            if (query.From.HasValue && query.To.HasValue)
+            {
+                var from = DateTime.SpecifyKind(query.From.Value, DateTimeKind.Utc);
+                var to = DateTime.SpecifyKind(query.To.Value, DateTimeKind.Utc);
+                finalizedQuery = finalizedQuery.Where(p => p.FinalizedAt >= from && p.FinalizedAt < to);
+            }
             var finalized = await finalizedQuery.ToListAsync(cancellationToken);
 
             var counts = new Dictionary<string, int>();

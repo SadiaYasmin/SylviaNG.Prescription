@@ -31,11 +31,18 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetDoctor
 
         public async Task<List<DoctorLeaderboardEntry>> Handle(GetDoctorLeaderboardQuery query, CancellationToken cancellationToken)
         {
+            var from = DateTime.SpecifyKind(query.From, DateTimeKind.Utc);
+            var to = DateTime.SpecifyKind(query.To, DateTimeKind.Utc);
+
             var doctors = await _doctorRepository.Query().ToListAsync(cancellationToken);
-            var consultations = await _consultationRepository.Query().ToListAsync(cancellationToken);
-            var finalized = await _prescriptionRepository.Query()
+            var consultations = (await _consultationRepository.Query().ToListAsync(cancellationToken))
+                .Where(c => c.CheckInAt >= from && c.CheckInAt < to)
+                .ToList();
+            var finalized = (await _prescriptionRepository.Query()
                 .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken))
+                .Where(p => p.FinalizedAt >= from && p.FinalizedAt < to)
+                .ToList();
 
             var consultationsByDoctor = consultations.GroupBy(c => c.DoctorId).ToDictionary(g => g.Key, g => g.ToList());
             var finalizedByDoctor = finalized.GroupBy(p => p.DoctorId).ToDictionary(g => g.Key, g => g.ToList());

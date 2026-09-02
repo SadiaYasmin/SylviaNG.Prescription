@@ -7,11 +7,12 @@ using SylviaNG.Prescription.Domain.Enums;
 namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecutiveSummary
 {
     /// <summary>
-    /// US-076. Current/previous month are UTC calendar months (everything in this codebase
-    /// is stored UTC via <c>UtcDateTimeInterceptor</c>) — <c>AddMonths(-1)</c> correctly
-    /// rolls January back into December of the prior year. <see cref="ExecutiveSummaryResponse.TotalMedicines"/>
-    /// is the active catalog row count (consistent with the catalog-count convention used
-    /// elsewhere in the app), not "distinct medicines ever prescribed".
+    /// US-076. Current/previous are the caller-selected date range vs. the immediately
+    /// preceding period of the same duration (see <see cref="AnalyticsDateBucketing.ResolvePreviousPeriod"/>).
+    /// Master counts (TotalPatients/TotalDoctors/TotalStaff) and <see cref="ExecutiveSummaryResponse.TotalMedicines"/>
+    /// (the active catalog row count, consistent with the catalog-count convention used
+    /// elsewhere in the app — not "distinct medicines ever prescribed") are always hospital-wide/all-time,
+    /// unaffected by the query's date range.
     /// </summary>
     public class GetExecutiveSummaryHandler : IRequestHandler<GetExecutiveSummaryQuery, ExecutiveSummaryResponse>
     {
@@ -37,24 +38,25 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecut
 
         public async Task<ExecutiveSummaryResponse> Handle(GetExecutiveSummaryQuery query, CancellationToken cancellationToken)
         {
-            var now = DateTime.UtcNow;
-            var currentMonthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var previousMonthStart = currentMonthStart.AddMonths(-1);
-            var nextMonthStart = currentMonthStart.AddMonths(1);
+            var from = DateTime.SpecifyKind(query.From, DateTimeKind.Utc);
+            var to = DateTime.SpecifyKind(query.To, DateTimeKind.Utc);
+            var (previousFrom, previousTo) = AnalyticsDateBucketing.ResolvePreviousPeriod(from, to);
 
             var patients = await _patientRepository.Query().ToListAsync(cancellationToken);
             var doctors = await _doctorRepository.Query().ToListAsync(cancellationToken);
             var totalMedicines = await _medicineRepository.Query().CountAsync(cancellationToken);
             var totalStaff = await _staffRepository.Query().CountAsync(cancellationToken);
-            var finalized = await _prescriptionRepository.Query()
+            var allFinalized = await _prescriptionRepository.Query()
                 .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
                 .ToListAsync(cancellationToken);
 
-            var rxCurrent = finalized.Count(p => p.FinalizedAt >= currentMonthStart && p.FinalizedAt < nextMonthStart);
-            var rxPrevious = finalized.Count(p => p.FinalizedAt >= previousMonthStart && p.FinalizedAt < currentMonthStart);
+            var finalized = allFinalized.Where(p => p.FinalizedAt >= from && p.FinalizedAt < to).ToList();
 
-            var patCurrent = patients.Count(p => p.RegisteredAt >= currentMonthStart && p.RegisteredAt < nextMonthStart);
-            var patPrevious = patients.Count(p => p.RegisteredAt >= previousMonthStart && p.RegisteredAt < currentMonthStart);
+            var rxCurrent = finalized.Count;
+            var rxPrevious = allFinalized.Count(p => p.FinalizedAt >= previousFrom && p.FinalizedAt < previousTo);
+
+            var patCurrent = patients.Count(p => p.RegisteredAt >= from && p.RegisteredAt < to);
+            var patPrevious = patients.Count(p => p.RegisteredAt >= previousFrom && p.RegisteredAt < previousTo);
 
             var aggregation = MedicinePrescribingAggregator.Aggregate(finalized);
             var topMedicines = aggregation.CountsByKey
@@ -81,7 +83,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetExecut
             return new ExecutiveSummaryResponse
             {
                 TotalPatients = patients.Count,
-                TotalPrescriptions = finalized.Count,
+                TotalPrescriptions = rxCurrent,
                 TotalMedicines = totalMedicines,
                 TotalDoctors = doctors.Count,
                 TotalStaff = totalStaff,

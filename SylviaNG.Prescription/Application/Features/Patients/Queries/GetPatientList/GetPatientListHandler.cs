@@ -4,6 +4,7 @@ using SylviaNG.Prescription.Application.Common;
 using SylviaNG.Prescription.Application.Features.Patients.Models;
 using SylviaNG.Prescription.Application.Interfaces.Repositories;
 using SylviaNG.Prescription.Application.Mappings;
+using SylviaNG.Prescription.Domain.Enums;
 using SylviaNG.Prescription.SharedKernel.Generic;
 
 namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetPatientList
@@ -46,6 +47,42 @@ namespace SylviaNG.Prescription.Application.Features.Patients.Queries.GetPatient
             {
                 var term = request.SearchTerm.Trim().ToLower();
                 scoped = scoped.Where(p => p.Name.ToLower().Contains(term) || p.Phone.ToLower().Contains(term));
+            }
+
+            if (request.CompletedWithMeOnly && caller.Role == UserRoleEnum.Doctor && caller.DoctorId.HasValue)
+            {
+                var completedQuery = _unitOfWork.Context.Consultations
+                    .Where(c => c.DoctorId == caller.DoctorId.Value && c.Status == ConsultationStatusEnum.Completed);
+                if (request.From.HasValue && request.To.HasValue)
+                {
+                    var from = DateTime.SpecifyKind(request.From.Value, DateTimeKind.Utc);
+                    var to = DateTime.SpecifyKind(request.To.Value, DateTimeKind.Utc);
+                    completedQuery = completedQuery.Where(c => c.CheckInAt >= from && c.CheckInAt < to);
+                }
+                var completedPatientIds = await completedQuery.Select(c => c.PatientId).Distinct().ToListAsync(cancellationToken);
+                scoped = scoped.Where(p => completedPatientIds.Contains(p.PatientId));
+            }
+            else if (request.ReturningOnly && request.From.HasValue && request.To.HasValue)
+            {
+                // Mirrors GetPatientAnalyticsHandler's "Returning" definition exactly: registered
+                // BEFORE the range started AND has >=1 Completed consultation inside it — counted
+                // as a distinct patient regardless of how many Completed consultations they have.
+                var from = DateTime.SpecifyKind(request.From.Value, DateTimeKind.Utc);
+                var to = DateTime.SpecifyKind(request.To.Value, DateTimeKind.Utc);
+                var completedPatientIds = await _unitOfWork.Context.Consultations
+                    .Where(c => c.CheckInAt >= from && c.CheckInAt < to && c.Status == ConsultationStatusEnum.Completed)
+                    .Select(c => c.PatientId)
+                    .Distinct()
+                    .ToListAsync(cancellationToken);
+                scoped = scoped.Where(p => completedPatientIds.Contains(p.PatientId) && p.RegisteredAt < from);
+            }
+            else if (request.From.HasValue && request.To.HasValue)
+            {
+                // Also backs NewOnly — "New" is simply registered inside [From,To), so it shares
+                // this branch with the plain registration-date filter (same condition either way).
+                var from = DateTime.SpecifyKind(request.From.Value, DateTimeKind.Utc);
+                var to = DateTime.SpecifyKind(request.To.Value, DateTimeKind.Utc);
+                scoped = scoped.Where(p => p.RegisteredAt >= from && p.RegisteredAt < to);
             }
 
             var totalCount = await scoped.CountAsync(cancellationToken);

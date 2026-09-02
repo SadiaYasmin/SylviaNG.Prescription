@@ -44,10 +44,16 @@ namespace SylviaNG.Prescription.Controllers
 
         [Authorize(Roles = "Admin,Doctor,Staff")]
         [HttpGet("catalog")]
-        public async Task<ActionResult<MedicineCatalogListResponse>> GetCatalog([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 25)
+        public async Task<ActionResult<MedicineCatalogListResponse>> GetCatalog(
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 25,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null,
+            [FromQuery] long? doctorId = null)
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId, page, pageSize));
+            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId, page, pageSize, from, to, doctorId));
             return Ok(result);
         }
 

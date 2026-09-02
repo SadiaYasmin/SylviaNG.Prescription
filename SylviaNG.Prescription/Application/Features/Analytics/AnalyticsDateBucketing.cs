@@ -153,5 +153,16 @@ namespace SylviaNG.Prescription.Application.Features.Analytics
             var format = key.Length == 7 ? "yyyy-MM" : "yyyy-MM-dd";
             return DateTime.ParseExact(key, format, System.Globalization.CultureInfo.InvariantCulture);
         }
+
+        /// <summary>
+        /// The period immediately preceding <paramref name="from"/>, of the same duration as
+        /// [<paramref name="from"/>, <paramref name="to"/>) — used to compute "vs previous
+        /// period" comparisons for an arbitrary user-selected date range (Executive Summary).
+        /// </summary>
+        public static (DateTime Start, DateTime End) ResolvePreviousPeriod(DateTime from, DateTime to)
+        {
+            var duration = to - from;
+            return (from - duration, from);
+        }
     }
 }

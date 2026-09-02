@@ -46,15 +46,23 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
             var user = await _userRepository.GetByIdAsync(doctor.UserId)
                 ?? throw new NotFoundException("User", doctor.UserId);
 
-            var consultations = await _consultationRepository.Query()
+            var allConsultations = await _consultationRepository.Query()
                 .Where(c => c.DoctorId == doctor.DoctorId)
                 .ToListAsync(cancellationToken);
 
-            var finalized = await _prescriptionRepository.Query()
+            var allFinalized = await _prescriptionRepository.Query()
                 .Where(p => p.DoctorId == doctor.DoctorId && p.Status == PrescriptionStatusEnum.Finalized)
                 .ToListAsync(cancellationToken);
 
             var now = DateTime.UtcNow;
+            var from = query.From.HasValue ? DateTime.SpecifyKind(query.From.Value, DateTimeKind.Utc) : DateTime.MinValue;
+            var to = query.To.HasValue ? DateTime.SpecifyKind(query.To.Value, DateTimeKind.Utc) : DateTime.MaxValue;
+
+            // Period-filtered — drives every KPI/chart except TodayPrescriptions/ThisMonthPrescriptions/RecentPrescriptions,
+            // which stay all-time/independent of the caller's date-range filter by design.
+            var consultations = allConsultations.Where(c => c.CheckInAt >= from && c.CheckInAt < to).ToList();
+            var finalized = allFinalized.Where(p => p.FinalizedAt >= from && p.FinalizedAt < to).ToList();
+
             var totalMedicinesPrescribed = finalized.Sum(p => p.GetMedicines().Count);
             var completedConsultations = consultations.Count(c => c.Status == ConsultationStatusEnum.Completed);
 
@@ -65,7 +73,7 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
                 .ToList();
             var topMedicines = allMedicines.Take(5).ToList();
 
-            var recentPrescriptionRecords = finalized
+            var recentPrescriptionRecords = allFinalized
                 .OrderByDescending(p => p.FinalizedAt)
                 .Take(5)
                 .ToList();
@@ -84,9 +92,15 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
                 })
                 .ToList();
 
-            var (trendStart, trendEnd) = AnalyticsDateBucketing.GetDefaultRange(query.ActivityGranularity, now);
+            // Bucket-sequence generation needs a bounded range even when the caller (e.g. the
+            // manage-doctor edit form, which only needs Profile) sent no date filter at all —
+            // MinValue/MaxValue would try to enumerate every day since year 1, so fall back to
+            // the same trailing-window default used elsewhere when From/To weren't supplied.
+            var (trendRangeStart, trendRangeEnd) = query.From.HasValue && query.To.HasValue
+                ? (from, to)
+                : AnalyticsDateBucketing.GetDefaultRange(query.ActivityGranularity, now);
             var activityTrend = AnalyticsDateBucketing
-                .BuildTrendZeroFilled(finalized, p => p.FinalizedAt, query.ActivityGranularity, trendStart, trendEnd)
+                .BuildTrendZeroFilled(finalized, p => p.FinalizedAt, query.ActivityGranularity, trendRangeStart, trendRangeEnd)
                 .Select(point => new DoctorActivityTrendPoint { Period = AnalyticsDateBucketing.ParseBucketKey(point.BucketKey), Count = point.Count })
                 .ToList();
 
@@ -105,8 +119,8 @@ namespace SylviaNG.Prescription.Application.Features.Doctors.Queries.GetDoctorDe
                 {
                     TotalPatientsConsulted = consultations.Select(c => c.PatientId).Distinct().Count(),
                     TotalPrescriptions = finalized.Count,
-                    TodayPrescriptions = finalized.Count(p => p.FinalizedAt?.Date == now.Date),
-                    ThisMonthPrescriptions = finalized.Count(p => p.FinalizedAt?.Year == now.Year && p.FinalizedAt?.Month == now.Month),
+                    TodayPrescriptions = allFinalized.Count(p => p.FinalizedAt?.Date == now.Date),
+                    ThisMonthPrescriptions = allFinalized.Count(p => p.FinalizedAt?.Year == now.Year && p.FinalizedAt?.Month == now.Month),
                     AvgPrescriptionsPerConsultation = AnalyticsMath.SafeDivide(finalized.Count, completedConsultations),
                     AvgMedicinesPerPrescription = AnalyticsMath.SafeDivide(totalMedicinesPrescribed, finalized.Count),
                     TotalMedicinesPrescribed = totalMedicinesPrescribed,

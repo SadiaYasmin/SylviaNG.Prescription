@@ -59,9 +59,11 @@ namespace SylviaNG.Prescription.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<DoctorDetailsResponse>> GetDetails(
             long id,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null,
             [FromQuery] AnalyticsGranularity activityGranularity = AnalyticsGranularity.Day)
         {
-            var result = await _mediator.Send(new GetDoctorDetailsQuery(id, activityGranularity));
+            var result = await _mediator.Send(new GetDoctorDetailsQuery(id, from, to, activityGranularity));
             return Ok(result);
         }
     }

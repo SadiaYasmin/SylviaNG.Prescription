@@ -53,16 +53,28 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMyDoct
                 _patientRepository.Query(), _unitOfWork.Context, caller, cancellationToken);
             var ownPatientCount = await ownPatientsQuery.CountAsync(cancellationToken);
 
-            var consultations = await _consultationRepository.Query()
-                .Where(c => c.DoctorId == doctorId)
-                .ToListAsync(cancellationToken);
-            var patientsConsulted = consultations.Select(c => c.PatientId).Distinct().Count();
+            DateTime? from = query.From.HasValue ? DateTime.SpecifyKind(query.From.Value, DateTimeKind.Utc) : null;
+            DateTime? to = query.To.HasValue ? DateTime.SpecifyKind(query.To.Value, DateTimeKind.Utc) : null;
+
+            // "Patients Consulted" only counts Completed consultations (not Waiting/InConsultation/Draft),
+            // matching the Doctor Dashboard period selector's definition — distinct from the all-status
+            // count this handler used before that requirement existed.
+            var completedConsultationsQuery = _consultationRepository.Query()
+                .Where(c => c.DoctorId == doctorId && c.Status == ConsultationStatusEnum.Completed);
+            if (from.HasValue && to.HasValue)
+            {
+                completedConsultationsQuery = completedConsultationsQuery.Where(c => c.CheckInAt >= from && c.CheckInAt < to);
+            }
+            var patientsConsulted = await completedConsultationsQuery.Select(c => c.PatientId).Distinct().CountAsync(cancellationToken);
 
             var myPrescriptions = await _prescriptionRepository.Query()
                 .Where(p => p.DoctorId == doctorId)
                 .ToListAsync(cancellationToken);
             var draftCount = myPrescriptions.Count(p => p.Status == PrescriptionStatusEnum.Draft);
             var finalizedList = myPrescriptions.Where(p => p.Status == PrescriptionStatusEnum.Finalized).ToList();
+            var finalizedCountInPeriod = from.HasValue && to.HasValue
+                ? finalizedList.Count(p => p.FinalizedAt >= from && p.FinalizedAt < to)
+                : finalizedList.Count;
 
             var assignedStaffCount = await _unitOfWork.Context.StaffDoctors
                 .CountAsync(sd => sd.DoctorId == doctorId, cancellationToken);
@@ -79,7 +91,7 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMyDoct
                 OwnPatientCount = ownPatientCount,
                 PatientsConsulted = patientsConsulted,
                 DraftPrescriptionCount = draftCount,
-                FinalizedPrescriptionCount = finalizedList.Count,
+                FinalizedPrescriptionCount = finalizedCountInPeriod,
                 AssignedStaffCount = assignedStaffCount,
                 TopMedicines = topMedicines
             };

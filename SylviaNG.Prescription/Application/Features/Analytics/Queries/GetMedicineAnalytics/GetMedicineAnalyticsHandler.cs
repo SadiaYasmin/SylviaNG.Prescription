@@ -25,9 +25,12 @@ namespace SylviaNG.Prescription.Application.Features.Analytics.Queries.GetMedici
 
         public async Task<MedicineAnalyticsResponse> Handle(GetMedicineAnalyticsQuery query, CancellationToken cancellationToken)
         {
+            var from = DateTime.SpecifyKind(query.From, DateTimeKind.Utc);
+            var to = DateTime.SpecifyKind(query.To, DateTimeKind.Utc);
+
             var catalog = await _medicineRepository.Query().ToListAsync(cancellationToken);
             var finalized = await _prescriptionRepository.Query()
-                .Where(p => p.Status == PrescriptionStatusEnum.Finalized)
+                .Where(p => p.Status == PrescriptionStatusEnum.Finalized && p.FinalizedAt >= from && p.FinalizedAt < to)
                 .ToListAsync(cancellationToken);
 
             var aggregation = MedicinePrescribingAggregator.Aggregate(finalized);
