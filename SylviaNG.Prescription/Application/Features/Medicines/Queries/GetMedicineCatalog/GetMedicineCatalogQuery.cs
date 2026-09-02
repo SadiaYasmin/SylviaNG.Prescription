@@ -24,7 +24,10 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
         /// <summary>Admin-only drill-down override: scope the count to one specific doctor (e.g. from the Doctor Details "Total Medicines Prescribed" card). Ignored for a Doctor caller — they're always scoped to their own DoctorId regardless of this value.</summary>
         public long? DoctorId { get; set; }
 
-        public GetMedicineCatalogQuery(string? searchTerm, string keycloakId, int page = 1, int pageSize = 25, DateTime? from = null, DateTime? to = null, long? doctorId = null)
+        /// <summary>Optional Status filter for the catalog table. Null = every medicine (active and deactivated), matching this query's original behavior.</summary>
+        public bool? IsActive { get; set; }
+
+        public GetMedicineCatalogQuery(string? searchTerm, string keycloakId, int page = 1, int pageSize = 25, DateTime? from = null, DateTime? to = null, long? doctorId = null, bool? isActive = null)
         {
             SearchTerm = searchTerm;
             KeycloakId = keycloakId;
@@ -33,6 +36,7 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
             From = from;
             To = to;
             DoctorId = doctorId;
+            IsActive = isActive;
         }
     }
 }

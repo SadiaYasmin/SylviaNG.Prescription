@@ -50,10 +50,11 @@ namespace SylviaNG.Prescription.Controllers
             [FromQuery] int pageSize = 25,
             [FromQuery] DateTime? from = null,
             [FromQuery] DateTime? to = null,
-            [FromQuery] long? doctorId = null)
+            [FromQuery] long? doctorId = null,
+            [FromQuery] bool? isActive = null)
         {
             var keycloakId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId, page, pageSize, from, to, doctorId));
+            var result = await _mediator.Send(new GetMedicineCatalogQuery(search, keycloakId, page, pageSize, from, to, doctorId, isActive));
             return Ok(result);
         }
 

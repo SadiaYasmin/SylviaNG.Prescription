@@ -44,6 +44,10 @@ namespace SylviaNG.Prescription.Application.Features.Medicines.Queries.GetMedici
                     m.BrandName.ToLower().Contains(term) ||
                     (m.GenericName != null && m.GenericName.ToLower().Contains(term)));
             }
+            if (query.IsActive.HasValue)
+            {
+                medicines = medicines.Where(m => m.Active == query.IsActive.Value);
+            }
             var catalog = await medicines.ToListAsync(cancellationToken);
 
             // No FK from a prescription's line items back to Medicine.MedicineId (they're a
